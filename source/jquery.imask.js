@@ -461,8 +461,8 @@
 		chrFromEv: function(ev) {
 			var chr = '', key = ev.which;
 
-			if(key >= 96 && key <= 105){ key -= 48; } // shift number-pad numbers to corresponding character codes
-			chr = String.fromCharCode(key);           // key pressed as a lowercase string
+			if(key >= 96 && key <= 105){ key -= 48; }     // shift number-pad numbers to corresponding character codes
+			chr = String.fromCharCode(key).toLowerCase(); // key pressed as a lowercase string
 			return chr;
 		},
 

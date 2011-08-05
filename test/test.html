@@ -2,7 +2,7 @@
 <html>
 <head>
 	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
-	<script type="text/javascript" src="../lib/jquery.imask.js"></script>
+	<script type="text/javascript" src="../source/jquery.imask.js"></script>
 	<script type="text/javascript">
 	$(function(){
 		$('#inp1').iMask({
@@ -23,6 +23,12 @@
 				return Math.min( 1000000, Math.max(0, parseFloat( val.replace(/[^\.\d]/g, ''))));
 			}
 		});
+
+		$('#inp4').iMask({
+		      type      : 'fixed'
+		    , mask      : '[99.999.999-x]'
+		    , stripMask : true
+		})
 	});
 	</script>
 
@@ -30,6 +36,9 @@
 	label {
 		min-width : 100px;
 		display   : inline-block;
+	}
+	input {
+		font-family : courier;
 	}
 	</style>
 
@@ -40,5 +49,7 @@
 	<label>Date: </label><input id="inp2">
 	<br />
 	<label>0-1000000: </label><input id="inp3">
+	<br />
+	<label>[99.999.999-x]: </label><input id="inp4">
 </body>
 </html>

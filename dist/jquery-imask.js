@@ -5,7 +5,7 @@
  * Authors: Mark Kahn
  *          Fabio Zendhi Nagao (http://zend.lojcomm.com.br)
  *
- * Date: Fri Aug 5 12:49:10 2011 -0700
+ * Date: Fri Aug 5 14:15:24 2011 -0700
  */
 (function($){
 	var $chk = function(obj){
@@ -470,8 +470,8 @@
 		chrFromEv: function(ev) {
 			var chr = '', key = ev.which;
 
-			if(key >= 96 && key <= 105){ key -= 48; } // shift number-pad numbers to corresponding character codes
-			chr = String.fromCharCode(key);           // key pressed as a lowercase string
+			if(key >= 96 && key <= 105){ key -= 48; }     // shift number-pad numbers to corresponding character codes
+			chr = String.fromCharCode(key).toLowerCase(); // key pressed as a lowercase string
 			return chr;
 		},
 
