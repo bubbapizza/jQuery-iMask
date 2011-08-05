@@ -20,7 +20,38 @@ $('#input').iMask({
 $('#input').iMask({
       type : 'fixed'
     , mask : '99/99/99'
+})
 ```
+
+## Options
+
+```
+type (number|fixed)
+mask Mask using 9,a,x notation
+maskEmptyChr   [ Default = ' ' ]
+validNumbers   [ Default = '1234567890' ]
+validAlphas    [ Default = 'abcdefghijklmnopqrstuvwxyz' ]
+validAlphaNums [ Default = 'abcdefghijklmnopqrstuvwxyz1234567890' ]
+groupDigits    [ Default = 3 ]
+decDigits      [ Default = 2 ]
+currencySymbol
+groupSymbol    [ Default = ',' ]
+decSymbol      [ Default = '.' ]
+showMask       [ Default = true ]
+stripMask      [ Default = false ]
+
+number Override options for when validating numbers only
+number.stripMask [ Default = false ]
+number.showMask  [ Default = false ]
+```
+
+#Events
+
+```
+onValid
+onInvalid
+```
+
 
 ## Features
 - Static Masking
