@@ -6,6 +6,10 @@
 
   Include either `jquery-imask.js` or `jquery-imask-min.js` from the dist directory
 
+## Demos
+
+  http://cwolves.github.com/jQuery-iMask/
+
 ## Example
 
 ```js
