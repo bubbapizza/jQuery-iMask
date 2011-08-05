@@ -12,7 +12,17 @@
 		$('#inp2').iMask({
 			  type : 'fixed'
 			, mask : '99/99/99'
-		})
+		});
+
+		$('#inp3').iMask({
+			       type : 'number'
+			,      mask : '99/99/99'
+			, decDigits : 0
+			, decSymbol : ''
+			,    sanity : function( val ){
+				return Math.min( 1000000, Math.max(0, parseFloat( val.replace(/[^\.\d]/g, ''))));
+			}
+		});
 	});
 	</script>
 
@@ -28,5 +38,7 @@
 	<label>Number: </label><input id="inp1">
 	<br />
 	<label>Date: </label><input id="inp2">
+	<br />
+	<label>0-1000000: </label><input id="inp3">
 </body>
 </html>
