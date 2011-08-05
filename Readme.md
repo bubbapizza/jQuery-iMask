@@ -67,4 +67,8 @@ onInvalid
     - onValid
     - onInvalid
 
+## Browser Compatibility
+
+  iMask is tested in Chrome, Firefox, Safari & IE.  It should work in any browser.  If there are any issues, please report them.
+
 The core code for the iMask plugin was originally created for MooTools by Fabio Zendhi Nagao (http://zendold.lojcomm.com.br/imask/)
