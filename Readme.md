@@ -2,6 +2,10 @@
 
   A jQuery input masking plugin.
 
+## Including
+
+  Include either `jquery-imask.js` or `jquery-imask-min.js` from the dist directory
+
 ## Example
 
 ```js
