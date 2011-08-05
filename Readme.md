@@ -47,7 +47,7 @@ number.stripMask [ Default = false ]
 number.showMask  [ Default = false ]
 ```
 
-#Events
+## Events
 
 ```
 onValid
