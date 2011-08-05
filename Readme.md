@@ -42,7 +42,7 @@ stripMask        [ Default = false ]
 sanity           Provide a function that acts as a sanity check.
                  return `false` to prevent the keypress, return any other value to replace the pre-masked input value.
 
-number Override options for when validating numbers only
+number           Override options for when validating numbers only
 number.stripMask [ Default = false ]
 number.showMask  [ Default = false ]
 ```
