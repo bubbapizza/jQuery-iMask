@@ -26,19 +26,19 @@ $('#input').iMask({
 ## Options
 
 ```
-type (number|fixed)
-mask Mask using 9,a,x notation
-maskEmptyChr   [ Default = ' ' ]
-validNumbers   [ Default = '1234567890' ]
-validAlphas    [ Default = 'abcdefghijklmnopqrstuvwxyz' ]
-validAlphaNums [ Default = 'abcdefghijklmnopqrstuvwxyz1234567890' ]
-groupDigits    [ Default = 3 ]
-decDigits      [ Default = 2 ]
+type             (number|fixed)
+mask             Mask using 9,a,x notation.  9=Numeric; a=Alpha; x=AlphaNumeric
+maskEmptyChr     [ Default = ' ' ]
+validNumbers     [ Default = '1234567890' ]
+validAlphas      [ Default = 'abcdefghijklmnopqrstuvwxyz' ]
+validAlphaNums   [ Default = 'abcdefghijklmnopqrstuvwxyz1234567890' ]
+groupDigits      [ Default = 3 ]  # of digits before a numeric seperator ( e.g. "3" yields 1,000,000 )
+decDigits        [ Default = 2 ]  # of digits to show after decimal place
 currencySymbol
-groupSymbol    [ Default = ',' ]
-decSymbol      [ Default = '.' ]
-showMask       [ Default = true ]
-stripMask      [ Default = false ]
+groupSymbol      [ Default = ',' ]
+decSymbol        [ Default = '.' ]
+showMask         [ Default = true ]
+stripMask        [ Default = false ]
 
 number Override options for when validating numbers only
 number.stripMask [ Default = false ]
