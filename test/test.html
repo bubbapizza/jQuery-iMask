@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+	<script type="text/javascript" src="../lib/jquery.imask.js"></script>
+	<script type="text/javascript">
+	$(function(){
+		$('#inp1').iMask({
+			type : 'number'
+		});
+
+		$('#inp2').iMask({
+			  type : 'fixed'
+			, mask : '99/99/99'
+		})
+	});
+	</script>
+
+	<style>
+	label {
+		min-width : 100px;
+		display   : inline-block;
+	}
+	</style>
+
+</head>
+<body>
+	<label>Number: </label><input id="inp1">
+	<br />
+	<label>Date: </label><input id="inp2">
+</body>
+</html>

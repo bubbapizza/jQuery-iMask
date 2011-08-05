@@ -23,10 +23,7 @@ $('#input').iMask({
 - Numeric Masking
     - Control currency symbol, decimal & thousands seperator, # of digits
 - Events
-    - onFocus
-    - onBlur
     - onValid
     - onInvalid
-    - onKeyDown
 
 The core code for the iMask plugin was originally created for MooTools by Fabio Zendhi Nagao (http://zendold.lojcomm.com.br/imask/)
