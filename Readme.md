@@ -37,8 +37,8 @@ decDigits        [ Default = 2 ]  # of digits to show after decimal place
 currencySymbol
 groupSymbol      [ Default = ',' ]
 decSymbol        [ Default = '.' ]
-showMask         [ Default = true ]
-stripMask        [ Default = false ]
+showMask         [ Default = true ]  Show mask while editing
+stripMask        [ Default = false ] Remove mask when done editing
 sanity           Provide a function that acts as a sanity check.
                  return `false` to prevent the keypress, return any other value to replace the pre-masked input value.
 
