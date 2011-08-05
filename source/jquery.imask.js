@@ -22,6 +22,7 @@
 	 * @param {String}   [options.decSymbol='.']
 	 * @param {Boolean}  [options.showMask=true]
 	 * @param {Boolean}  [options.stripMask=false]
+	 * @param {Function} [options.sanity]
 	 * @param {Object}   [options.number] Override options for when validating numbers only
 	 * @param {Boolean}  [options.number.stripMask=false]
 	 * @param {Boolean}  [options.number.showMask=false]
