@@ -3,6 +3,7 @@
   A jQuery input masking plugin.
 
 ## Example
+
 ```js
 $('#input').iMask({
     type : 'number'
