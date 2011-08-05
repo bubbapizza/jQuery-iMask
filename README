@@ -1,0 +1,31 @@
+# jQuery iMask Plugin
+
+  A jQuery input masking plugin.
+
+## Example
+```js
+$('#input').iMask({
+    type : 'number'
+});
+
+$('#input').iMask({
+      type : 'fixed'
+    , mask : '99/99/99'
+```
+
+## Features
+- Static Masking
+   - Mask numbers, letters
+   - Customize list of valid numbers & letters
+   - Special symbols are displayed but un-selectable
+   - Optionally only show the mask while user is entering
+- Numeric Masking
+    - Control currency symbol, decimal & thousands seperator, # of digits
+- Events
+    - onFocus
+    - onBlur
+    - onValid
+    - onInvalid
+    - onKeyDown
+
+The core code for the iMask plugin was originally created for MooTools by Fabio Zendhi Nagao (http://zendold.lojcomm.com.br/imask/)
