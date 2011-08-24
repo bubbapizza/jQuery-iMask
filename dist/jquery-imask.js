@@ -5,7 +5,7 @@
  * Authors: Mark Kahn
  *          Fabio Zendhi Nagao (http://zend.lojcomm.com.br)
  *
- * Date: Fri Aug 5 14:15:24 2011 -0700
+ * Date: Wed Aug 24 10:50:49 2011 -0700
  */
 (function($){
 	var $chk = function(obj){
@@ -24,11 +24,6 @@
 	 * @param {String}   [options.validNumbers='1234567890']
 	 * @param {String}   [options.validAlphas='abcdefghijklmnopqrstuvwxyz']
 	 * @param {String}   [options.validAlphaNums='abcdefghijklmnopqrstuvwxyz1234567890']
-	 * @param {Function} [options.onFocus]
-	 * @param {Function} [options.onBlur]
-	 * @param {Function} [options.onValid]
-	 * @param {Function} [options.onInvalid]
-	 * @param {Function} [options.onKeyDown]
 	 * @param {Number}   [options.groupDigits=3]
 	 * @param {Number}   [options.decDigits=2]
 	 * @param {String}   [options.currencySymbol]
@@ -36,6 +31,7 @@
 	 * @param {String}   [options.decSymbol='.']
 	 * @param {Boolean}  [options.showMask=true]
 	 * @param {Boolean}  [options.stripMask=false]
+	 * @param {Function} [options.sanity]
 	 * @param {Object}   [options.number] Override options for when validating numbers only
 	 * @param {Boolean}  [options.number.stripMask=false]
 	 * @param {Boolean}  [options.number.showMask=false]
@@ -72,17 +68,18 @@
 			this.node    = node;
 			this.domNode = node[0];
 			this.options = $.extend({}, this.options, this.options[options.type] || {}, options);
+			var self     = this;
 
 			if(options.type == "number") this.node.css("text-align", "right");
 
 			this.node
-				.bind("mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); })
+				.bind( "mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); } )
 
-				.bind("mouseup",  this.onMouseUp.bind(this)  )
-				.bind("keydown",  this.onKeyDown.bind(this)  )
-				.bind("keypress", this.onKeyPress.bind(this) )
-				.bind("focus",    this.onFocus.bind(this)    )
-				.bind("blur",     this.onBlur.bind(this)     );
+				.bind( "mouseup",  function(){ self.onMouseUp .apply(self, arguments); } )
+				.bind( "keydown",  function(){ self.onKeyDown .apply(self, arguments); } )
+				.bind( "keypress", function(){ self.onKeyPress.apply(self, arguments); } )
+				.bind( "focus",    function(){ self.onFocus   .apply(self, arguments); } )
+				.bind( "blur",     function(){ self.onBlur    .apply(self, arguments); } );
 		},
 
 		isFixed  : function(){ return this.options.type == 'fixed';  },
@@ -187,12 +184,24 @@
 			}
 		},
 
+		allowKeys : {
+			   8 : 1 // backspace
+			,  9 : 1 // tab
+			, 13 : 1 // enter
+			, 35 : 1 // end
+			, 36 : 1 // home
+			, 37 : 1 // left
+			, 38 : 1 // up
+			, 39 : 1 // right
+			, 40 : 1 // down
+			, 46 : 1 // delete
+		},
+
 		onKeyPress: function(ev) {
 			var key = ev.which || ev.keyCode;
 
 			if(
-				   !(key == 9) // tab
-				&& !(key == 13) // enter
+				!( this.allowKeys[ key ] )
 				&& !(ev.ctrlKey || ev.altKey || ev.metaKey)
 			) {
 				ev.preventDefault();
