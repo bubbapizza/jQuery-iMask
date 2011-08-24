@@ -175,12 +175,24 @@
 			}
 		},
 
+		allowKeys : {
+			   8 : 1 // backspace
+			,  9 : 1 // tab
+			, 13 : 1 // enter
+			, 35 : 1 // end
+			, 36 : 1 // home
+			, 37 : 1 // left
+			, 38 : 1 // up
+			, 39 : 1 // right
+			, 40 : 1 // down
+			, 46 : 1 // delete
+		},
+
 		onKeyPress: function(ev) {
 			var key = ev.which || ev.keyCode;
 
 			if(
-				   !(key == 9) // tab
-				&& !(key == 13) // enter
+				!( this.allowKeys[ key ] )
 				&& !(ev.ctrlKey || ev.altKey || ev.metaKey)
 			) {
 				ev.preventDefault();
