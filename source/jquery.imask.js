@@ -59,17 +59,18 @@
 			this.node    = node;
 			this.domNode = node[0];
 			this.options = $.extend({}, this.options, this.options[options.type] || {}, options);
+			var self     = this;
 
 			if(options.type == "number") this.node.css("text-align", "right");
 
 			this.node
-				.bind("mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); })
+				.bind( "mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); } )
 
-				.bind("mouseup",  this.onMouseUp.bind(this)  )
-				.bind("keydown",  this.onKeyDown.bind(this)  )
-				.bind("keypress", this.onKeyPress.bind(this) )
-				.bind("focus",    this.onFocus.bind(this)    )
-				.bind("blur",     this.onBlur.bind(this)     );
+				.bind( "mouseup",  function(){ self.onMouseUp .apply(self, arguments); } )
+				.bind( "keydown",  function(){ self.onKeyDown .apply(self, arguments); } )
+				.bind( "keypress", function(){ self.onKeyPress.apply(self, arguments); } )
+				.bind( "focus",    function(){ self.onFocus   .apply(self, arguments); } )
+				.bind( "blur",     function(){ self.onBlur    .apply(self, arguments); } );
 		},
 
 		isFixed  : function(){ return this.options.type == 'fixed';  },
