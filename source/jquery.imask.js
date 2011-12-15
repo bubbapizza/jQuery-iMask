@@ -318,6 +318,13 @@
 			return [ this.getSelectionStart(), this.getSelectionEnd() ];
 		},
 
+      //
+      // To figure out where the cursor currently is, we use the
+      // selectionStart and selectionEnd properties of the input field.
+      //
+      // Essentially, the current cursor position can be determined
+      // by the selectionEnd property.
+      //
 		getSelectionStart: function() {
 			var p = 0,
 			    n = this.domNode.selectionStart;
@@ -338,20 +345,26 @@
 		},
 
 		getSelectionEnd: function() {
-			var p = 0,
-			    n = this.domNode.selectionEnd;
+			var result = 0,
+			    domSelectEnd = this.domNode.selectionEnd;
 
-			if( n ) {
-				if( typeof( n ) == "number"){
-					p = n;
+			if( domSelectEnd ) {
+            // If selectionEnd is a number, then return the number.
+				if( typeof( domSelectEnd ) == "number"){
+					result = domSelectEnd;
 				}
+
+         // Not sure what the fuck this is checking for but there must
+         // have been for preventing weird shit happening.
 			} else if( document.selection ){
 				var r = document.selection.createRange().duplicate();
 				r.moveStart( "character", -this.domNode.value.length );
 				p = r.text.length;
 			}
-			return p;
+			return result;
 		},
+
+
 
 		isInputPosition: function(p) {
 			var mask = this.options.mask.toLowerCase();

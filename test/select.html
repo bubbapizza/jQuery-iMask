@@ -1,0 +1,15 @@
+<head>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+</head>
+<body>
+    <input type="text" id="myText" value="Some text for testing"
+        onKeyPress="Select()"/>
+    <div id="pos"></div><br/>
+    <div id="selection"></div>
+    <script type="text/javascript">
+      $("#myText").keyup(function() {
+        $("#pos").text(this.selectionStart + " " + this.selectionEnd);
+        $("#selection").text(document.selection.type);
+      });
+    </script>
+</body>
