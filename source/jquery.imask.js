@@ -182,6 +182,7 @@
             } else if(this.options.type == "number") {
 
                /* See which key was pressed. */
+               var p = this.getSelectionStart();
                switch(ev.which) {
                   case 35: // END
                   case 36: // HOME
@@ -204,8 +205,9 @@
                      var chr = this.chrFromEv( ev );
                      console.log(p, chr);
                      if( this.isViableInput( p, chr ) ) {
-                        var range = new Range( this )
-                         ,    val = this.sanityTest( range.replaceWith( chr ) );
+                        var range = new Range( this );
+                        console.log("RANGE=",range);
+                        var val = this.sanityTest( range.replaceWith( chr ) );
 
                         if(val !== false){
                            this.updateSelection( chr );
@@ -429,6 +431,9 @@
 
 
 
+      /****** 
+       *  Replace the currently selected text with the given string.
+       ******/
       updateSelection: function( chr ) {
          var value = this.domNode.value
           ,  range = new Range( this )
@@ -466,42 +471,64 @@
        *  selected text.
        ******/
       getSelectionStart: function() {
-         var p = 0,
-             n = this.domNode.selectionStart;
+         var result = 0,
+             selectStart = this.domNode.selectionStart;
 
-         if( n ) {
-            if( typeof( n ) == "number" ){
-               p = n;
+         /* 
+          *  If we're on a browser that supports the selectionStart method,
+          *  then just check to make sure the result is a number and 
+          *  return it. 
+          */
+         if( selectStart ) {
+            if( typeof( selectStart ) == "number" ){
+               result = selectStart;
             }
+
+         /* 
+          *  Our browser doesn't support selectionStart so maybe we can 
+          *  hack around it with the document.selection property.
+          */
          } else if( document.selection ){
             var r = document.selection.createRange().duplicate();
             r.moveEnd( "character", this.domNode.value.length );
-            p = this.domNode.value.lastIndexOf( r.text );
+            result = this.domNode.value.lastIndexOf( r.text );
             if( r.text == "" ){
-               p = this.domNode.value.length;
-            }
-         }
-         return p;
+               result = this.domNode.value.length;
+            } // endif
+         } // endif
+
+         return result;
       }, // endfunction
 
 
 
+      /******
+       *  Return the cursor position for the end of the currently
+       *  selected text.
+       ******/
       getSelectionEnd: function() {
          var result = 0,
-             domSelectEnd = this.domNode.selectionEnd;
+             selectEnd = this.domNode.selectionEnd;
 
-         if( domSelectEnd ) {
-            // If selectionEnd is a number, then return the number.
-            if( typeof( domSelectEnd ) == "number"){
-               result = domSelectEnd;
-            }
+         /* 
+          *  If we're on a browser that supports the selectionEnd method,
+          *  then just check to make sure the result is a number and 
+          *  return it. 
+          */
+         if( selectEnd ) {
+            /* If selectEnd is a number, then return the number. */
+            if( typeof( selectEnd ) == "number"){
+               result = selectEnd;
+            } // endif
 
-         // Not sure what the fuck this is checking for but there must
-         // have been for preventing weird shit happening.
+         /* 
+          *  Our browser doesn't support selectionEnd so maybe we can 
+          *  hack around it with the document.selection property.
+          */
          } else if( document.selection ){
             var r = document.selection.createRange().duplicate();
             r.moveStart( "character", -this.domNode.value.length );
-            p = r.text.length;
+            result = r.text.length;
          } // endif
 
          return result;
@@ -591,6 +618,10 @@
 
       }, // endfunction
 
+
+      /******
+       *  Called from isViableInput, used for validating fixed strings.
+       ******/
       isViableFixedInput : function( p, chr ){
          var mask   = this.options.mask.toLowerCase();
          var chMask = mask.charAt(p);
@@ -614,10 +645,20 @@
       }, // endfunction
 
 
+      /******
+       *  Called from isViableInput, used for validating numbers.
+       ******/
       isViableNumericInput : function( p, chr ){
          return !!~this.options.validNumbers.indexOf( chr );
       }, // endfunction
 
+
+
+/**************** MASKING ********************/
+
+      /******
+       *  Apply this field's mask to a given string.
+       ******/
       wearMask: function(str) {
          var   mask = this.options.mask.toLowerCase()
           ,  output = ""
@@ -651,34 +692,72 @@
       }, // endfunction
 
 
-      stripMask: function() {
-         var value = this.domNode.value;
-         if("" == value) return "";
-         var output = "";
 
+      /******
+       *  This method strips off the input mask for fixed strings and 
+       *  strips off any non-numeric characters for numbers.
+       ******/
+      stripMask: function() {
+         var output = ""
+           , chr = '';
+           , value = this.domNode.value;
+
+
+         /* Don't do anything if the input field is empty */
+         if(value == "") {
+            return "";
+         } // endif
+
+
+         /* For strings, strip off the mask characters. */
          if( this.isFixed() ) {
+
             for(var i = 0, len = value.length; i < len; i++) {
-               if((value.charAt(i) != this.options.maskEmptyChr) && (this.isInputPosition(i)))
-                  {output += value.charAt(i);}
-            }
+               chr = value.charAt(i);
+               if((chr != this.options.maskEmptyChr) && 
+                  (this.isInputPosition(i))) {
+                  output += chr;
+               } // endif 
+            } // endfor
+
+         /* For numbers, all we do is strip out anything that's not 
+            a digit. */
          } else if( this.isNumber() ) {
             for(var i = 0, len = value.length; i < len; i++) {
-               if(this.options.validNumbers.indexOf(value.charAt(i)) >= 0)
-                  {output += value.charAt(i);}
-            }
-         }
+
+               chr = value.charAt(i);
+               if(this.options.validNumbers.indexOf(chr) >= 0) {
+                  output += chr;
+               } // endif
+
+            } // endfor
+         } // endif
 
          return output;
       }, // endfunction
 
 
-      chrFromEv: function(ev) {
-         var chr = '', key = ev.which;
 
-         if(key >= 96 && key <= 105){ key -= 48; }     // shift number-pad numbers to corresponding character codes
-         chr = String.fromCharCode(key).toLowerCase(); // key pressed as a lowercase string
+      /******
+       *  Convert the event keycode from a number to a character.
+       *  All upper case keycodes get converted to lower case.
+       ******/
+      chrFromEv: function(ev) {
+         var chr = ''
+           , key = ev.which;
+
+         /* Shift number-pad numbers to corresponding character codes. */
+         if(key >= 96 && key <= 105) { 
+            key -= 48; 
+         } // endif  
+
+         /* Convert the key pressed to lower case. */
+         chr = String.fromCharCode(key).toLowerCase(); 
+
          return chr;
-      },
+      }, // endfunction
+
+
 
       formatNumber: function() {
          // stripLeadingZeros
@@ -721,7 +800,10 @@
    };
 
 
-   function Range( obj ){
+
+/**************** RANGE OBJECT ********************/
+
+   function Range( obj ) {
       this.range = obj.getSelectionRange();
       this.len   = obj.domNode.value.length
       this.obj   = obj;
