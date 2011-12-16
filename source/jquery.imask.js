@@ -9,7 +9,7 @@
 	 * @requires jQuery
 	 * @name jQuery.iMask
 	 * @param {Object}    options
-	 * @param {String}    options.type (number|fixed)
+	 * @param {String}    options.type (number|fixed|time)
 	 * @param {String}    options.mask Mask using 9,a,x notation
 	 * @param {String}   [options.maskEmptyChr=' ']
 	 * @param {String}   [options.validNumbers='1234567890']
@@ -22,6 +22,7 @@
 	 * @param {String}   [options.decSymbol='.']
 	 * @param {Boolean}  [options.showMask=true]
 	 * @param {Boolean}  [options.stripMask=false]
+    * @param {Boolean}  [options.ampmTime=true]
 	 * @param {Function} [options.sanity]
 	 * @param {Object}   [options.number] Override options for when validating numbers only
 	 * @param {Boolean}  [options.number.stripMask=false]
@@ -65,7 +66,6 @@
 
 			this.node
 				.bind( "mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); } )
-
 				.bind( "mouseup",  function(){ self.onMouseUp .apply(self, arguments); } )
 				.bind( "keydown",  function(){ self.onKeyDown .apply(self, arguments); } )
 				.bind( "keypress", function(){ self.onKeyPress.apply(self, arguments); } )
@@ -73,9 +73,31 @@
 				.bind( "blur",     function(){ self.onBlur    .apply(self, arguments); } );
 		},
 
+
 		isFixed  : function(){ return this.options.type == 'fixed';  },
 		isNumber : function(){ return this.options.type == 'number'; },
+		isTime   : function(){ return this.options.type == 'time'; },
 
+
+		allowKeys : {
+			   8 : 1 // backspace
+			,  9 : 1 // tab
+			, 13 : 1 // enter
+			, 35 : 1 // end
+			, 36 : 1 // home
+			, 37 : 1 // left
+			, 38 : 1 // up
+			, 39 : 1 // right
+			, 40 : 1 // down
+			, 46 : 1 // delete
+		}, 
+
+
+/**************** EVENTS ********************/
+
+		/***********
+		 * MOUSE UP
+       ***********/
 		onMouseUp: function( ev ) {
 			ev.stopPropagation();
 			ev.preventDefault();
@@ -85,19 +107,32 @@
 				this.setSelection(p, (p + 1));
 			} else if(this.isNumber() ) {
 				this.setEnd();
-			}
-		},
+			} // endif
+		}, // endfunction
 
+
+
+		/***********
+		 * KEY DOWN
+       ***********/
 		onKeyDown: function(ev) {
+
+         /****** CTRL, ALT, META KEYS******/
 			if(ev.ctrlKey || ev.altKey || ev.metaKey) {
 				return;
 
+			/****** ENTER KEY ******/
 			} else if(ev.which == 13) { // enter
 				this.node.blur();
 
 				this.submitForm(this.node);
 
+         /****** NON-TAB KEYS ******/
 			} else if(!(ev.which == 9)) { // tab
+
+            /* 
+             *  See if we're updating a fixed-format string.
+             */
 				if(this.options.type == "fixed") {
 					ev.preventDefault();
 
@@ -136,7 +171,14 @@
 							}
 							break;
 					}
+
+
+            /*
+             *  See if we're updating a number.
+             */
 				} else if(this.options.type == "number") {
+
+               /* See which key was pressed. */
 					switch(ev.which) {
 						case 35: // END
 						case 36: // HOME
@@ -168,27 +210,23 @@
 								this.node.trigger( "valid", ev, this.node );
 							} else {	
 								this.node.trigger( "invalid", ev, this.node );
-							}
+							} // endif 
 							break;
-					}
-				}
-			}
-		},
+					} // endswitch
 
-		allowKeys : {
-			   8 : 1 // backspace
-			,  9 : 1 // tab
-			, 13 : 1 // enter
-			, 35 : 1 // end
-			, 36 : 1 // home
-			, 37 : 1 // left
-			, 38 : 1 // up
-			, 39 : 1 // right
-			, 40 : 1 // down
-			, 46 : 1 // delete
-		},
+				} // endif 
+			} // endif 
+		}, // endfunction
 
+
+
+		/***********
+		 * KEY PRESS
+       ***********/
 		onKeyPress: function(ev) {
+
+			/* jQuery should normalize the keyCode property to 'which' but
+			   just in case it doesn't, 'or' it with keyCode. */
 			var key = ev.which || ev.keyCode;
 
 			if(
@@ -197,45 +235,104 @@
 			) {
 				ev.preventDefault();
 				ev.stopPropagation();
-			}
-		},
+			} // endif 
+		}, // endfunction
 
+
+
+		/***********
+		 * FOCUS
+       ***********/
 		onFocus: function(ev) {
+
+         /* Make sure this event doesn't trigger anything else higher
+            up in the DOM. */
 			ev.stopPropagation();
 			ev.preventDefault();
 
-			this.options.showMask && (this.domNode.value = this.wearMask(this.domNode.value));
+         if (this.options.showMask) {
+             this.domNode.value = this.wearMask(this.domNode.value);
+         } //endif 
+
+         /* Run the sanity test on the text field's value. */
 			this.sanityTest( this.domNode.value );
 
 			var self = this;
 
-			setTimeout( function(){
-				self[ self.options.type === "fixed" ? 'selectFirst' : 'setEnd' ]();
-			}, 1 );
-		},
+         /* 
+			 *  This is a weird way to position the cursor but that's what this
+			 *  code does.  One millisecond after the onFocus event triggers,
+			 *  either selectFirst or the setEnd method gets called, depending
+			 *  on the mask type. 
+			 */
+			setTimeout( 
+   				function(){
+						if (self.options.type === "fixed") {
+							return self['selectFirst']();
+						} else {
+							return self['setEnd']();
+						} // endif
+   				} //endfuction
+   				, 1 
+				);
+		}, // endfunction
 
+
+
+		/***********
+		 * BLUR
+       ***********/
 		onBlur: function(ev) {
 			ev.stopPropagation();
 			ev.preventDefault();
 
 			if(this.options.stripMask)
 				this.domNode.value = this.stripMask();
-		},
+		}, // endfunction
 
+
+
+/**************** TEXT SELECTION ********************/
+
+      /* 
+		 *  Select the entire value of the input field.
+		 */
 		selectAll: function() {
 			this.setSelection(0, this.domNode.value.length);
 		},
 
+     
+      /*
+       *  Select the first updateable character in the field.
+       */
 		selectFirst: function() {
+
+         /* 
+			 *  Search through each character in the mask until we hit a
+			 *  non-mask character.  Once we hit one, select that character
+			 *  in the input field.
+			 */
 			for(var i = 0, len = this.options.mask.length; i < len; i++) {
 				if(this.isInputPosition(i)) {
 					this.setSelection(i, (i + 1));
 					return;
-				}
-			}
-		},
+				} // endif
+			} // endfor
 
+		}, // endfunction
+
+
+
+      /*
+       *  Select the last updateable character in the field.
+       */
 		selectLast: function() {
+
+			/* 
+			 *  Search backwards through each character in the mask until we 
+			 *  hit a non-mask character.  Once we hit one, select that 
+			 *  character in the input field.
+			 */
 			for(var i = (this.options.mask.length - 1); i >= 0; i--) {
 				if(this.isInputPosition(i)) {
 					this.setSelection(i, (i + 1));
@@ -243,6 +340,8 @@
 				}
 			}
 		},
+
+
 
 		selectPrevious: function(p) {
 			if( !$chk(p) ){ p = this.getSelectionStart(); }
@@ -277,24 +376,44 @@
 			}
 		},
 
+
+      /* 
+       *  This method is the workhorse of cursor movement.  It selects
+		 *  text from cursor position a to cursor position b.  Optionally,
+		 *  you can leave out 'b' and just pass an array with 2 elements
+		 *  in it.
+		 */
 		setSelection: function( a, b ) {
+
+         /* 
+			 *  See if an array was passed.  If it was, then b will be
+			 *  the second value of the array. 
+			 */
 			a = a.valueOf();
 			if( !b && a.splice ){
 				b = a[1];
 				a = a[0];
 			}
 
+         /* If the browser supports setSelectionRange, then just 
+			   call it. */
 			if(this.domNode.setSelectionRange) {
 				this.domNode.focus();
 				this.domNode.setSelectionRange(a, b);
+
+			/* We are using shitty internet explorer so use createTextRange
+			   to select the text. */
 			} else if(this.domNode.createTextRange) {
 				var r = this.domNode.createTextRange();
 				r.collapse();
 				r.moveStart("character", a);
 				r.moveEnd("character", (b - a));
 				r.select();
-			}
-		},
+			} // endif
+
+		}, // endfunction
+
+
 
 		updateSelection: function( chr ) {
 			var value = this.domNode.value
@@ -309,6 +428,10 @@
 			}
 		},
 
+
+      /* 
+       *  Move the cursor to the end of the text field.
+       */
 	 	setEnd: function() {
 			var len = this.domNode.value.length;
 			this.setSelection(len, len);
@@ -318,13 +441,13 @@
 			return [ this.getSelectionStart(), this.getSelectionEnd() ];
 		},
 
-      //
-      // To figure out where the cursor currently is, we use the
-      // selectionStart and selectionEnd properties of the input field.
-      //
-      // Essentially, the current cursor position can be determined
-      // by the selectionEnd property.
-      //
+		/*
+		 *  To figure out where the cursor currently is, we use the
+		 *  selectionStart and selectionEnd properties of the input field.
+		 * 
+		 *  Essentially, the current cursor position can be determined
+		 *  by the selectionEnd property.
+		 */
 		getSelectionStart: function() {
 			var p = 0,
 			    n = this.domNode.selectionStart;
@@ -360,43 +483,73 @@
 				var r = document.selection.createRange().duplicate();
 				r.moveStart( "character", -this.domNode.value.length );
 				p = r.text.length;
-			}
+			} // endif
+
 			return result;
-		},
+		}, // endfunction
 
 
 
+		/* 
+		 *  Determine if position p is part of the mask or input value.
+		 */
 		isInputPosition: function(p) {
 			var mask = this.options.mask.toLowerCase();
 			var chr = mask.charAt(p);
 			return !!~"9ax".indexOf(chr);
 		},
 
+
+      /*
+       *  Run the sanity test on the field.  We pass the non-masked
+		 *  value of the input field to the sanity function/regexp.
+		 *  This test is used for custom input validation.
+		 */  
 		sanityTest: function( str, p ){
 			var sanity = this.options.sanity;
 
+         /* If the sanity option is a regular expression, then just
+            test the input value against the regexp.  This will
+				return either true or false. */
 			if(sanity instanceof RegExp){
 				return sanity.test(str);
+
+
+			/* If the sanity option is a function, then pass the function
+			   the input value PLUS the character position. */ 
 			}else if($.isFunction(sanity)){
 				var ret = sanity(str, p);
+
+				/* See if we got a boolean back.  If so, just return it. */
 				if(typeof(ret) == 'boolean'){
 					return ret;
+
+				/* If we got an undefined value back, don't return anything */
 				}else if(typeof(ret) != 'undefined'){
+
+					/* If this field is a string mask, apply the mask to 
+                  the returned sanity value and show it in the input
+                  field. */
 					if( this.isFixed() ){
 						var p = this.getSelectionStart();
 						this.domNode.value = this.wearMask( ret );
 						this.setSelection( p, p+1 );
 						this.selectNext();
+
+               /* For numbers, format the sanity value into a number and
+                  display it in the input field. */
 					}else if( this.isNumber() ){
 						var range = new Range( this );
 						this.domNode.value = ret;
 						this.setSelection( range );
 						this.formatNumber();
-					}
+					} // endif
+
 					return false;
-				}
-			}
-		},
+				} // endif
+
+			} // endif
+		}, // endfunction
 
 		isViableInput: function() {
 			return this[ this.isFixed() ? 'isViableFixedInput' : 'isViableNumericInput' ].apply( this, arguments );
