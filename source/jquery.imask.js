@@ -229,10 +229,15 @@
             just in case it doesn't, 'or' it with keyCode. */
          var key = ev.which || ev.keyCode;
 
-         if(
-            !( this.allowKeys[ key ] )
-            && !(ev.ctrlKey || ev.altKey || ev.metaKey)
-         ) {
+         /* 
+          *  If this is not an allowed key AND none of the ctrl, alt 
+          *  or meta keys are pressed, then stop propagation of this 
+          *  event so nothing happens. 
+          */
+         if ( !( this.allowKeys[ key ] ) && 
+              !(ev.ctrlKey || ev.altKey || ev.metaKey)
+            ) {
+
             ev.preventDefault();
             ev.stopPropagation();
          } // endif 
@@ -433,22 +438,25 @@
       /****** 
        *  Move the cursor to the end of the text field.
        ******/
-       setEnd: function() {
+      setEnd: function() {
          var len = this.domNode.value.length;
          this.setSelection(len, len);
       },
 
+
+      /****** 
+       *  Return a 2 element array containing the start & end of
+       *  the current selection.  
+       ******/
       getSelectionRange : function(){
          return [ this.getSelectionStart(), this.getSelectionEnd() ];
       },
 
-      /*
-       *  To figure out where the cursor currently is, we use the
-       *  selectionStart and selectionEnd properties of the input field.
-       * 
-       *  Essentially, the current cursor position can be determined
-       *  by the selectionEnd property.
-       */
+
+      /******
+       *  Return the cursor position for the start of the currently
+       *  selected text.
+       ******/
       getSelectionStart: function() {
          var p = 0,
              n = this.domNode.selectionStart;
@@ -466,7 +474,9 @@
             }
          }
          return p;
-      },
+      }, // endfunction
+
+
 
       getSelectionEnd: function() {
          var result = 0,
