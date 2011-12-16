@@ -99,6 +99,8 @@
        * MOUSE UP
        ***********/
       onMouseUp: function( ev ) {
+         console.log("mouseup");
+
          ev.stopPropagation();
          ev.preventDefault();
 
@@ -116,6 +118,7 @@
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
+         console.log("keydown");
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
@@ -199,6 +202,7 @@
                      ev.preventDefault();
 
                      var chr = this.chrFromEv( ev );
+                     console.log(p, chr);
                      if( this.isViableInput( p, chr ) ) {
                         var range = new Range( this )
                          ,    val = this.sanityTest( range.replaceWith( chr ) );
@@ -224,6 +228,7 @@
        * KEY PRESS
        ***********/
       onKeyPress: function(ev) {
+         console.log("keypress");
 
          /* jQuery should normalize the keyCode property to 'which' but
             just in case it doesn't, 'or' it with keyCode. */
@@ -249,6 +254,7 @@
        * FOCUS
        ***********/
       onFocus: function(ev) {
+         console.log("focus");
 
          /* Make sure this event doesn't trigger anything else higher
             up in the DOM. */
@@ -288,6 +294,8 @@
        * BLUR
        ***********/
       onBlur: function(ev) {
+         console.log("blur");
+
          ev.stopPropagation();
          ev.preventDefault();
 
@@ -500,6 +508,8 @@
       }, // endfunction
 
 
+
+/**************** VALIDATION ********************/
 
       /****** 
        *  Determine if position p is part of the mask or input value.
