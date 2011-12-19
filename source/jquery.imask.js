@@ -22,11 +22,7 @@
     * @param {String}   [options.decSymbol='.']
     * @param {Boolean}  [options.showMask=true]
     * @param {Boolean}  [options.stripMask=false]
-    * @param {Boolean}  [options.ampmTime=true]
     * @param {Function} [options.sanity]
-    * @param {Object}   [options.number] Override options for when validating numbers only
-    * @param {Boolean}  [options.number.stripMask=false]
-    * @param {Boolean}  [options.number.showMask=false]
     ******/
    var iMask = function(){
       this.initialize.apply(this, arguments);
@@ -65,12 +61,23 @@
          if(options.type == "number") this.node.css("text-align", "right");
 
          this.node
-            .bind( "mousedown click", function(ev){ ev.stopPropagation(); ev.preventDefault(); } )
-            .bind( "mouseup",  function(){ self.onMouseUp .apply(self, arguments); } )
-            .bind( "keydown",  function(){ self.onKeyDown .apply(self, arguments); } )
-            .bind( "keypress", function(){ self.onKeyPress.apply(self, arguments); } )
-            .bind( "focus",    function(){ self.onFocus   .apply(self, arguments); } )
-            .bind( "blur",     function(){ self.onBlur    .apply(self, arguments); } );
+            .bind( "mousedown click", function(ev) { 
+               ev.stopPropagation(); ev.preventDefault(); } )
+
+            .bind( "mouseup",  function() { 
+               self.onMouseUp .apply(self, arguments); } )
+
+            .bind( "keydown",  function() { 
+               self.onKeyDown .apply(self, arguments); } )
+
+            .bind( "keypress", function() { 
+               self.onKeyPress.apply(self, arguments); } )
+
+            .bind( "focus",    function() { 
+               self.onFocus   .apply(self, arguments); } )
+
+            .bind( "blur",     function() { 
+               self.onBlur    .apply(self, arguments); } );
       }, // endfunction
 
 
@@ -667,21 +674,51 @@
             , 'x' : 'validAlphaNums'
          };
 
-         for(var i = 0, u = 0, len = mask.length; i < len; i++) {
-            switch(mask.charAt(i)) {
+         /*
+          *  Loop through all the characters in the mask.
+          *  One, by one we check the mask characters against the 
+          *  string and figure out what to do.
+          */
+         strPtr = 0;
+         for(var maskPtr = 0; maskPtr < mask.length; maskPtr++) {
+            
+            /* Check the current mask character. */
+            maskChr = mask.charAt(maskPtr);
+            switch(maskChr) {
+
+               /*** PLACEHOLDER CHARACTERS ***/
                case '9':
                case 'a':
                case 'x':
-                  output += 
-                     ((this.options[ chrSets[ mask.charAt(i) ] ].indexOf( str.charAt(u).toLowerCase() ) >= 0) && ( str.charAt(u) != ""))
-                        ? str.charAt( u++ )
-                        : this.options.maskEmptyChr;
+
+                  /* Get the list of valid characters to check against. */
+                  validChrSet = this.options[chrSets[maskChr]];
+                  strChr = str.charAt(strPtr++).toLowerCase();
+
+                  /* If we have a valid character in the string, then
+                     it goes in the output string. */
+                  if ((validChrSet.indexOf(strChr) >= 0) &&
+                      (strChr != "")) { 
+                     output += strChar;
+
+                  /* Otherwise, it's bogus so put an empty character. */
+                  } else {
+                     output += this.options.maskEmptyChr;
+                  } // endif
+                     
                   break;
 
+
+               /*** OTHER CHARACTERS ***/
                default:
-                  output += mask.charAt(i);
-                  if( str.charAt(u) == mask.charAt(i) ){
-                     u++;
+                  /* Other characters automatically go in the output. */
+                  output += maskChr;
+
+                  /* If the current string character actually matches the 
+                     mask character, then we have to increment the string
+                     character pointer. */
+                  if( str.charAt(strPtr) == maskChr ){
+                     strPtr += 1;
                   } // endif
 
                   break;
@@ -771,8 +808,6 @@
 
          /* Clean up the input value by stripping away the mask and any
             leading zeros. */
-         cleanVal = this.stripMask();
-       
          cleanVal = this.stripMask().replace(/^0+/, '' );
           
          /* If the cleaned up number has less digits than the number
@@ -782,13 +817,22 @@
          } // endfor
 
 
-         console.log('cleanval=', cleanVal);
          /* Figure out the decimal and integer portion of the number. */
          strDecimal = cleanVal.substr(
             cleanVal.length - this.options.decDigits)
          strInteger = cleanVal.substring(
             0, (cleanVal.length - this.options.decDigits))
-         console.log(strDecimal, strInteger);
+
+
+         /* 
+          *  If this field has a number mask, then apply it and we're
+          *  done. 
+          */
+         if (this.mask) {
+            this._wearNumMask();
+            return;
+         } // endif
+       
 
          /* 
           *  Add grouping symbols to the integer portion using a regular
@@ -807,7 +851,7 @@
 
 
          /* 
-          *  Insert the newly formatted number into the input field. 
+          *  Put everything together and save it in the input field.
           */
          this.domNode.value = this.options.currencySymbol + 
             strInteger + this.options.decSymbol + strDecimal;
