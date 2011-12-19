@@ -32,7 +32,7 @@
       options: {
          maskEmptyChr   : ' ',
 
-         validNumbers   : "1234567890.-",
+         validNumbers   : "1234567890",
          validAlphas    : "abcdefghijklmnopqrstuvwxyz",
          validAlphaNums : "abcdefghijklmnopqrstuvwxyz1234567890",
 
@@ -728,10 +728,40 @@
 
                   break;
             } // endswitch
-         }
+         } // endfor
          return output;
       }, // endfunction
 
+
+
+      /******
+       *  Apply this field's number mask.  Pass the integer and
+       *  decimal portions of the number separately.
+       ******/
+      _wearNumMask: function(strInt, strDec, mask) {
+         var mask, decPtr, intMask, decMask;
+
+         console.log("_wearNumMask", strInt, strDec);
+
+         /* Figure out the integer portion of the mask and the
+            decimal portion of the mask. */
+         decPtr = mask.indexOf(this.options.decSymbol);
+         if (decPtr < 0) {
+            intMask = mask;
+            decMask = '';
+         } else {
+            intMask = mask.substring(0, decPtr);
+            decMask = mask.substring(decPtr + 1);
+         } // endif
+
+
+         console.log('xxx', strInt, intMask);
+         var wearIntMask = this._wearMask(strInt, intMask);
+         console.log("wearIntMask=", wearIntMask);
+         
+
+         return;
+      }, // endfunction
 
 
       /******
@@ -808,37 +838,6 @@
          return chr;
       }, // endfunction
 
-
-
-      /******
-       *  Apply this field's number mask.  Pass the integer and
-       *  decimal portions of the number separately.
-       ******/
-      _wearNumMask: function(strInt, strDec) {
-         var mask, decPtr, intMask, decMask;
-
-         console.log("_wearNumMask", strInt, strDec);
-
-         /* Figure out the integer portion of the mask and the
-            decimal portion of the mask. */
-         mask = this.options.mask;
-         decPtr = mask.indexOf(this.options.decSymbol);
-         if (decPtr < 0) {
-            intMask = mask;
-            decMask = '';
-         } else {
-            intMask = mask.substring(0, decPtr);
-            decMask = mask.substring(decPtr + 1);
-         } // endif
-
-
-         console.log('xxx', strInt, intMask);
-         var wearIntMask = this._wearMask(strInt, intMask);
-         console.log("wearIntMask=", wearIntMask);
-         
-
-         return;
-      }, // endfunction
 
 
       /******
