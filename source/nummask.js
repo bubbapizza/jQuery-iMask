@@ -2,9 +2,18 @@ var myMask = ">>>,>>9.999";
 var myInt = "1234";
 var myDec = "02";
 
-
+DIGITS = '0123456789';
 DECIMAL_CHR = '.';
 GROUP_CHR = ',';
+
+/******
+ *  Simple function to test a character to see if it's a digit.
+ ******/
+isDigit = function(str) {
+   return (DIGITS.indexOf(str[0]) > 0);
+} // endfunction
+
+
 
 /******
  *  Apply this field's number mask.  Pass the integer and
@@ -35,10 +44,12 @@ wearNumMask = function(strInt, strDec, mask) {
     *  string and figure out what to do.
     */
    strIntPtr = strInt.length - 1;
-   for(var maskPtr = mask.length - 1; maskPtr > 0;  maskPtr--) {
+   for(var maskPtr = mask.length - 1; maskPtr >= 0;  maskPtr--) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
+      print("maskChr=" + maskChr);
+      print("output=" + output);
       switch(maskChr) {
 
          /*** OPTIONAL DIGIT ***/
@@ -46,9 +57,12 @@ wearNumMask = function(strInt, strDec, mask) {
 
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it.*/
+            print("strIntPtr=", strIntPtr);
             if (strIntPtr >= 0) {
-               output = strInt[strIntPtr] + output;
-               strIntPtr -= 1;
+               if (isDigit(strInt[strIntPtr])) {
+                  output = strInt[strIntPtr] + output;
+                  strIntPtr -= 1;
+               } // endif
             } // endif
          break;
 
@@ -86,17 +100,28 @@ wearNumMask = function(strInt, strDec, mask) {
 
             /* As long as we still have characters in the string left,
                we can put in a group character. */
-            if (strIntPtr >= 0) {
+            if ((strIntPtr >= 0) && (isDigit(strInt[strIntPtr]))) {
                output = GROUP_CHR + output;
             } // endif
+         break;
+
+
+         /*** OTHER CHARACTERS ***/
+         default:
          break;
       } // endswitch
    } //endfor
 
-   return output;
+   
+   /*
+    *  Check for number too large for mask!!!
+    */
+   if (strIntPtr > 0) {
+      throw "MASK SIZE EXCEEDED";
+   } else { 
+      return output;
+   } // endif
+
 } // endfunction
 
 
-var result = wearNumMask(myInt, myDec, myMask);
-
-print (result);
