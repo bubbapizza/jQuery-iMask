@@ -32,7 +32,7 @@
       options: {
          maskEmptyChr   : ' ',
 
-         validNumbers   : "1234567890",
+         validNumbers   : "1234567890.-",
          validAlphas    : "abcdefghijklmnopqrstuvwxyz",
          validAlphaNums : "abcdefghijklmnopqrstuvwxyz1234567890",
 
@@ -124,6 +124,7 @@
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
+         console.log('keydown', ev);
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
@@ -619,11 +620,11 @@
 
          /* For fixed string fields, call isViableFixedInput. */
          if (this.isFixed()) {
-            return this.isViableFixedInput(p, chr);
+            return this._isViableFixedInput(p, chr);
 
          /* For number fields, call isViableNumericInput. */
          } else if (this.isNumber()) {
-            return this.isViableNumericInput(p, chr);
+            return this._isViableNumericInput(p, chr);
          } // endif 
 
       }, // endfunction
@@ -632,7 +633,7 @@
       /******
        *  Called from isViableInput, used for validating fixed strings.
        ******/
-      isViableFixedInput : function( p, chr ){
+      _isViableFixedInput : function( p, chr ){
          var mask   = this.options.mask.toLowerCase();
          var chMask = mask.charAt(p);
 
@@ -658,8 +659,9 @@
       /******
        *  Called from isViableInput, used for validating numbers.
        ******/
-      isViableNumericInput : function( p, chr ){
-         return !!~this.options.validNumbers.indexOf( chr );
+      _isViableNumericInput : function( p, chr ){
+         console.log('viable', this.options.validNumbers, chr);
+         return !(this.options.validNumbers.indexOf( chr ) < 0);
       }, // endfunction
 
 
@@ -702,7 +704,7 @@
                      it goes in the output string. */
                   if ((validChrSet.indexOf(strChr) >= 0) &&
                       (strChr != "")) { 
-                     output += strChar;
+                     output += strChr;
 
                   /* Otherwise, it's bogus so put an empty character. */
                   } else {
@@ -760,7 +762,7 @@
             } // endfor
 
          /* For numbers, all we do is strip out anything that's not 
-            a digit. */
+            a digit, period or negative sign. */
          } else if( this.isNumber() ) {
             for(var i = 0, len = value.length; i < len; i++) {
 
@@ -786,9 +788,19 @@
            , key = ev.which;
 
          /* Shift number-pad numbers to corresponding character codes. */
-         if(key >= 96 && key <= 105) { 
+         console.log("key=", key);
+         if (key >= 96 && key <= 105) { 
             key -= 48; 
-         } // endif  
+
+         /* MINUS SIGN */
+         } else if (key == 109 || key == 189 || key == 45) {
+            return '-';
+
+         /* PERIOD */
+         } else if (key == 190 || key == 46) {
+            return '.';
+         } // endif
+
 
          /* Convert the key pressed to lower case. */
          chr = String.fromCharCode(key).toLowerCase(); 
@@ -796,6 +808,37 @@
          return chr;
       }, // endfunction
 
+
+
+      /******
+       *  Apply this field's number mask.  Pass the integer and
+       *  decimal portions of the number separately.
+       ******/
+      _wearNumMask: function(strInt, strDec) {
+         var mask, decPtr, intMask, decMask;
+
+         console.log("_wearNumMask", strInt, strDec);
+
+         /* Figure out the integer portion of the mask and the
+            decimal portion of the mask. */
+         mask = this.options.mask;
+         decPtr = mask.indexOf(this.options.decSymbol);
+         if (decPtr < 0) {
+            intMask = mask;
+            decMask = '';
+         } else {
+            intMask = mask.substring(0, decPtr);
+            decMask = mask.substring(decPtr + 1);
+         } // endif
+
+
+         console.log('xxx', strInt, intMask);
+         var wearIntMask = this._wearMask(strInt, intMask);
+         console.log("wearIntMask=", wearIntMask);
+         
+
+         return;
+      }, // endfunction
 
 
       /******
@@ -807,6 +850,7 @@
          var strInteger;
          var strDecimal;
          var regExp;
+         console.log("formatNumber");
 
 
          /* Clean up the input value by stripping away the mask and any
@@ -831,8 +875,8 @@
           *  If this field has a number mask, then apply it and we're
           *  done. 
           */
-         if (this.mask) {
-            this._wearNumMask();
+         if (this.options.mask) {
+            this._wearNumMask(strInteger, strDecimal);
             return;
          } // endif
        
