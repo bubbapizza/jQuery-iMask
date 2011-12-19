@@ -30,7 +30,7 @@
     ******/
    var iMask = function(){
       this.initialize.apply(this, arguments);
-   };
+   }; // endfunction
 
    iMask.prototype = {
       options: {
@@ -71,7 +71,7 @@
             .bind( "keypress", function(){ self.onKeyPress.apply(self, arguments); } )
             .bind( "focus",    function(){ self.onFocus   .apply(self, arguments); } )
             .bind( "blur",     function(){ self.onBlur    .apply(self, arguments); } );
-      },
+      }, // endfunction
 
 
       isFixed  : function(){ return this.options.type == 'fixed';  },
@@ -166,14 +166,15 @@
                   default:
                      var chr = this.chrFromEv(ev);
                      if( this.isViableInput( p, chr ) ) {
-                        this.updateSelection( ev.shiftKey ? chr.toUpperCase() : chr );
+                        this.updateSelection( 
+                           ev.shiftKey ? chr.toUpperCase() : chr );
                         this.node.trigger("valid", ev, this.node);
                         this.selectNext();
                      } else {
                         this.node.trigger("invalid", ev, this.node);
-                     }
+                     } // endif
                      break;
-               }
+               } // endswitch
 
 
             /*
@@ -296,11 +297,15 @@
        * BLUR
        ***********/
       onBlur: function(ev) {
-         console.log("blur");
 
+         /* Prevent the blur event from going anywhere else. */
          ev.stopPropagation();
          ev.preventDefault();
 
+         /* 
+          *  If the stripMask option is set, strip the mask from the
+          *  input value and display it.
+          */
          if(this.options.stripMask)
             this.domNode.value = this.stripMask();
       }, // endfunction
@@ -315,7 +320,7 @@
       selectAll: function() {
 
          this.setSelection(0, this.domNode.value.length);
-      },
+      }, // endfunction
 
      
       /****** 
@@ -353,9 +358,9 @@
             if(this.isInputPosition(i)) {
                this.setSelection(i, (i + 1));
                return;
-            }
-         }
-      },
+            } // endif
+         } // endfor
+      }, // endfunction
 
 
 
@@ -369,9 +374,9 @@
                this.setSelection(p - 1, p);
             } else {
                this.selectPrevious(p - 1);
-            }
-         }
-      },
+            } // endif
+         } // endif
+      }, // endfunction
 
       selectNext: function(p) {
          if( !$chk(p) ){ p = this.getSelectionEnd(); }
@@ -379,7 +384,7 @@
          if( this.isNumber() ){
             this.setSelection( p+1, p+1 );
             return;
-         }
+         } // endif
 
          if( p >= this.options.mask.length) {
             this.selectLast();
@@ -388,9 +393,9 @@
                this.setSelection(p, (p + 1));
             } else {
                this.selectNext(p + 1);
-            }
-         }
-      },
+            } // endif
+         } // endif
+      }, // endfunction
 
 
       /****** 
@@ -444,8 +449,8 @@
             this.setSelection( range[0] + 1, range[0] + 1 );
          }else{
             this.setSelection( range );
-         }
-      },
+         } // endif
+      }, // endfunction
 
 
       /****** 
@@ -454,7 +459,7 @@
       setEnd: function() {
          var len = this.domNode.value.length;
          this.setSelection(len, len);
-      },
+      }, // endfunction
 
 
       /****** 
@@ -463,7 +468,7 @@
        ******/
       getSelectionRange : function(){
          return [ this.getSelectionStart(), this.getSelectionEnd() ];
-      },
+      }, // endfunction
 
 
       /******
@@ -482,7 +487,7 @@
          if( selectStart ) {
             if( typeof( selectStart ) == "number" ){
                result = selectStart;
-            }
+            } // endif
 
          /* 
           *  Our browser doesn't support selectionStart so maybe we can 
@@ -545,7 +550,7 @@
          var mask = this.options.mask.toLowerCase();
          var chr = mask.charAt(p);
          return !!~"9ax".indexOf(chr);
-      },
+      }, // endfunction
 
 
       /******
@@ -639,7 +644,7 @@
             'x' : this.options.validAlphaNums
          }[chMask] || '').indexOf(chr) >= 0){
             return true;
-         }
+         } // endif
 
          return false;
       }, // endfunction
@@ -683,10 +688,10 @@
                   output += mask.charAt(i);
                   if( str.charAt(u) == mask.charAt(i) ){
                      u++;
-                  }
+                  } // endif
 
                   break;
-            }
+            } // endswitch
          }
          return output;
       }, // endfunction
@@ -699,7 +704,7 @@
        ******/
       stripMask: function() {
          var output = ""
-           , chr = '';
+           , chr = ''
            , value = this.domNode.value;
 
 
@@ -759,44 +764,71 @@
 
 
 
+      /******
+       *  Format a number field based on the options set.
+       ******/
       formatNumber: function() {
-         // stripLeadingZeros
-         var olen = this.domNode.value.length
-          ,  str2 = this.stripMask()
-          ,  str1 = str2.replace( /^0+/, '' )
-          , range = new Range(this);
+         var cleanVal; 
+         var range = new Range(this);
+         var strInteger;
+         var strDecimal;
+         var regExp;
 
-         // wearLeadingZeros
 
-         str2 = str1;
-         str1 = "";
-         for(var len = str2.length, i = this.options.decDigits; len <= i; len++) {
-            str1 += "0";
-         }
-         str1 += str2;
+         /* Clean up the input value by stripping away the mask and any
+            leading zeros. */
+         cleanVal = this.stripMask().replace(/^0+/, '' );
+          
+         /* If the cleaned up number has less digits than the number
+            of decimal digits, then then we have to pad it with zeros. */
+         for(var i = cleanVal.length; i <= this.options.decDigits; i++) {
+            cleanVal += "0";
+         } // endfor
 
-         // decimalSymbol
-         str2 = str1.substr(str1.length - this.options.decDigits)
-         str1 = str1.substring(0, (str1.length - this.options.decDigits))
 
-         // groupSymbols
-         var re = new RegExp("(\\d+)(\\d{"+ this.options.groupDigits +"})");
-         while(re.test(str1)) {
-            str1 = str1.replace(re, "$1"+ this.options.groupSymbol +"$2");
-         }
+         /* Figure out the decimal and integer portion of the number. */
+         strDecimal = cleanVal.substr(
+            cleanVal.length - this.options.decDigits)
+         strInteger = cleanVal.substring(
+            0, (cleanVal.length - this.options.decDigits))
 
-         this.domNode.value = this.options.currencySymbol + str1 + this.options.decSymbol + str2;
+         /* 
+          *  Add grouping symbols to the integer portion using a regular
+          *  expression. 
+          */
+
+         /* Build the regular expression string for groups of digits. */
+         regExp = new RegExp(
+            "(\\d+)(\\d{"+ this.options.groupDigits +"})");
+
+         /* Put commas in between the digit groups. */
+         while(regExp.test(strInteger)) {
+            strInteger = strInteger.replace(
+               re, "$1"+ this.options.groupSymbol +"$2");
+         } // endwhile
+
+
+         /* 
+          *  Insert the newly formatted number into the input field. 
+          */
+         this.domNode.value = this.options.currencySymbol + 
+            strInteger + this.options.decSymbol + strDecimal;
+
+         
+         /* Reset the selection range. */
          this.setSelection( range );
-      },
+      }, // endfunction
 
-      getObjForm: function() {
-         return this.node.getClosest('form');
-      },
 
+
+      /******
+       *  Submit the form that this  input field is part of.
+       ******/
       submitForm: function() {
-         var form = this.getObjForm();
+         var form = this.node.getClosest('form');
+
          form.trigger('submit');
-      }
+      } // endfunction
    };
 
 
