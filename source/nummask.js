@@ -1,21 +1,23 @@
-var myMask = ">>>,>>9.999".
-var myInt = "1234".
-var myDec = "02".
+var myMask = ">>>,>>9.999";
+var myInt = "1234";
+var myDec = "02";
 
 
+DECIMAL_CHR = '.';
+GROUP_CHR = ',';
 
 /******
  *  Apply this field's number mask.  Pass the integer and
  *  decimal portions of the number separately.
  ******/
 wearNumMask = function(strInt, strDec, mask) {
-   var mask, decPtr, intMask, decMask;
+   var decPtr, intMask, decMask;
+   var output = '';
 
-   console.log("_wearNumMask", strInt, strDec);
 
    /* Figure out the integer portion of the mask and the
       decimal portion of the mask. */
-   decPtr = mask.indexOf(this.options.decSymbol);
+   decPtr = mask.indexOf(DECIMAL_CHR);
    if (decPtr < 0) {
       intMask = mask;
       decMask = '';
@@ -24,59 +26,74 @@ wearNumMask = function(strInt, strDec, mask) {
       decMask = mask.substring(decPtr + 1);
    } // endif
 
+ 
+   /****** INTEGER PORTION ******/
 
    /*
-    *  Loop through all the characters in the mask.
+    *  Loop backwards through all the characters in the mask.
     *  One, by one we check the mask characters against the 
     *  string and figure out what to do.
     */
-   strPtr = 0;
-   for(var maskPtr = 0; maskPtr < mask.length; maskPtr++) {
+   strIntPtr = strInt.length - 1;
+   for(var maskPtr = mask.length - 1; maskPtr > 0;  maskPtr--) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
       switch(maskChr) {
 
-         /*** PLACEHOLDER CHARACTERS ***/
+         /*** OPTIONAL DIGIT ***/
+         case '>':
+
+            /* Check to see if we have a number to fill in a number 
+               slot.  If so, use it.*/
+            if (strIntPtr >= 0) {
+               output = strInt[strIntPtr] + output;
+               strIntPtr -= 1;
+            } // endif
+         break;
+
+
+         /*** FORCED DIGIT ***/
          case '9':
-         case 'a':
-         case 'x':
 
-            /* Get the list of valid characters to check against. */
-            validChrSet = this.options[chrSets[maskChr]];
-            strChr = str.charAt(strPtr++).toLowerCase();
+            /* Check to see if we have a number to fill in a number 
+               slot.  If so, use it. */
+            if (strIntPtr >= 0) {
+               output = strInt[strIntPtr] + output;
+               strIntPtr -= 1;
 
-            /* If we have a valid character in the string, then
-               it goes in the output string. */
-            if ((validChrSet.indexOf(strChr) >= 0) &&
-                (strChr != "")) { 
-               output += strChr;
-
-            /* Otherwise, it's bogus so put an empty character. */
+            /* No more numbers, pad with a zero. */
             } else {
-               output += this.options.maskEmptyChr;
+               output = '0' + output;
             } // endif
-               
-            break;
+         break;
 
 
-         /*** OTHER CHARACTERS ***/
-         default:
-            /* Other characters automatically go in the output. */
-            output += maskChr;
-
-            /* If the current string character actually matches the 
-               mask character, then we have to increment the string
-               character pointer. */
-            if( str.charAt(strPtr) == maskChr ){
-               strPtr += 1;
+         /*** MINUS SIGN ***/
+         case '-':
+            
+            /* The only way we can show a minus sign is if the string
+               has a matching minus sign in the right spot. */
+            if (strInt[strIntPtr] == '-') {
+               output = '-' + output;
+               strIntPtr -= 1;
             } // endif
+         break;
 
-            break;
+  
+         /*** GROUP CHARACTER ***/
+         case GROUP_CHR:
+
+            /* As long as we still have characters in the string left,
+               we can put in a group character. */
+            if (strIntPtr >= 0) {
+               output = GROUP_CHR + output;
+            } // endif
+         break;
       } // endswitch
    } //endfor
 
-   return;
+   return output;
 } // endfunction
 
 
