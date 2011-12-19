@@ -99,7 +99,6 @@
        * MOUSE UP
        ***********/
       onMouseUp: function( ev ) {
-         console.log("mouseup");
 
          ev.stopPropagation();
          ev.preventDefault();
@@ -118,7 +117,6 @@
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
-         console.log("keydown");
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
@@ -204,10 +202,8 @@
                      ev.preventDefault();
 
                      var chr = this.chrFromEv( ev );
-                     console.log(p, chr);
                      if( this.isViableInput( p, chr ) ) {
                         var range = new Range( this );
-                        console.log("RANGE=",range);
                         var val = this.sanityTest( range.replaceWith( chr ) );
 
                         if(val !== false){
@@ -231,7 +227,6 @@
        * KEY PRESS
        ***********/
       onKeyPress: function(ev) {
-         console.log("keypress");
 
          /* jQuery should normalize the keyCode property to 'which' but
             just in case it doesn't, 'or' it with keyCode. */
@@ -257,7 +252,6 @@
        * FOCUS
        ***********/
       onFocus: function(ev) {
-         console.log("focus");
 
          /* Make sure this event doesn't trigger anything else higher
             up in the DOM. */
@@ -777,20 +771,24 @@
 
          /* Clean up the input value by stripping away the mask and any
             leading zeros. */
+         cleanVal = this.stripMask();
+       
          cleanVal = this.stripMask().replace(/^0+/, '' );
           
          /* If the cleaned up number has less digits than the number
             of decimal digits, then then we have to pad it with zeros. */
          for(var i = cleanVal.length; i <= this.options.decDigits; i++) {
-            cleanVal += "0";
+            cleanVal = "0" + cleanVal;
          } // endfor
 
 
+         console.log('cleanval=', cleanVal);
          /* Figure out the decimal and integer portion of the number. */
          strDecimal = cleanVal.substr(
             cleanVal.length - this.options.decDigits)
          strInteger = cleanVal.substring(
             0, (cleanVal.length - this.options.decDigits))
+         console.log(strDecimal, strInteger);
 
          /* 
           *  Add grouping symbols to the integer portion using a regular
@@ -804,7 +802,7 @@
          /* Put commas in between the digit groups. */
          while(regExp.test(strInteger)) {
             strInteger = strInteger.replace(
-               re, "$1"+ this.options.groupSymbol +"$2");
+               regExp, "$1"+ this.options.groupSymbol +"$2");
          } // endwhile
 
 
