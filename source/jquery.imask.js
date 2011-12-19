@@ -266,7 +266,9 @@
          ev.preventDefault();
 
          if (this.options.showMask) {
-             this.domNode.value = this.wearMask(this.domNode.value);
+             var mask = this.options.mask.toLowerCase()
+             this.domNode.value = 
+               this._wearMask(this.domNode.value, mask);
          } //endif 
 
          /* Run the sanity test on the text field's value. */
@@ -572,21 +574,23 @@
          /* If the sanity option is a function, then pass the function
             the input value PLUS the character position. */ 
          }else if($.isFunction(sanity)){
-            var ret = sanity(str, p);
+            var sanityCheck = sanity(str, p);
 
             /* See if we got a boolean back.  If so, just return it. */
-            if(typeof(ret) == 'boolean'){
-               return ret;
+            if(typeof(sanityCheck) == 'boolean') {
+               return sanityCheck;
 
             /* If we got an undefined value back, don't return anything */
-            }else if(typeof(ret) != 'undefined'){
+            } else if(typeof(sanityCheck) != 'undefined') {
 
                /* If this field is a string mask, apply the mask to 
                   the returned sanity value and show it in the input
                   field. */
                if( this.isFixed() ){
                   var p = this.getSelectionStart();
-                  this.domNode.value = this.wearMask( ret );
+                  var mask = this.options.mask.toLowerCase()
+
+                  this.domNode.value = this._wearMask(sanityCheck, mask);
                   this.setSelection( p, p+1 );
                   this.selectNext();
 
@@ -594,7 +598,7 @@
                   display it in the input field. */
                }else if( this.isNumber() ){
                   var range = new Range( this );
-                  this.domNode.value = ret;
+                  this.domNode.value = sanityCheck;
                   this.setSelection( range );
                   this.formatNumber();
                } // endif
@@ -665,9 +669,8 @@
       /******
        *  Apply this field's mask to a given string.
        ******/
-      wearMask: function(str) {
-         var   mask = this.options.mask.toLowerCase()
-          ,  output = ""
+      _wearMask: function(str, mask) {
+         var output = ""
           , chrSets = {
               '9' : 'validNumbers'
             , 'a' : 'validAlphas'
