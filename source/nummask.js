@@ -17,13 +17,14 @@ GROUP_CHR = ',';
  *  Simple function to test a character to see if it's a digit.
  ******/
 isDigit = function(str) {
-   return (DIGITS.indexOf(str[0]) > 0);
+   return (DIGITS.indexOf(str[0]) >= 0);
 } // endfunction
 
 
 
 /******
- *  Simple function to strip out all non-numeric info from a string. 
+ *  Simple function to strip out all non-numeric info from a string and
+ *  strip out any leading zeros. 
  ******/
 stripAlpha = function(str) {
    var output = '';
@@ -33,6 +34,9 @@ stripAlpha = function(str) {
          output += str[i];
       } // endif
    } // endfor
+
+   /* Strip off leading zeros. */
+   output = output.replace(/^0+/, '');
 
    return output;
 } // endfunction
