@@ -48,8 +48,6 @@ wearNumMask = function(strInt, strDec, mask) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
-      print("maskChr=" + maskChr);
-      print("output=" + output);
       switch(maskChr) {
 
          /*** OPTIONAL DIGIT ***/
@@ -57,7 +55,6 @@ wearNumMask = function(strInt, strDec, mask) {
 
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it.*/
-            print("strIntPtr=", strIntPtr);
             if (strIntPtr >= 0) {
                if (isDigit(strInt[strIntPtr])) {
                   output = strInt[strIntPtr] + output;
@@ -98,8 +95,9 @@ wearNumMask = function(strInt, strDec, mask) {
          /*** GROUP CHARACTER ***/
          case GROUP_CHR:
 
-            /* As long as we still have characters in the string left,
-               we can put in a group character. */
+            /* As long as we still have characters in the string left
+               AND the next character is a digit, then we can put in a 
+               group character. */
             if ((strIntPtr >= 0) && (isDigit(strInt[strIntPtr]))) {
                output = GROUP_CHR + output;
             } // endif
