@@ -191,6 +191,9 @@
                /* See which key was pressed. */
                var p = this.getSelectionStart();
                switch(ev.which) {
+
+                  /* For cursor movement keys, we don't do anything, 
+                     just let the browser do it's thing. */
                   case 35: // END
                   case 36: // HOME
                   case 37: // LEFT
@@ -198,6 +201,9 @@
                   case 39: // RIGHT
                   case 40: // DOWN
                      break;
+
+                  /* For backspace & delete, format the number, then 
+                     apply the key and format the number afterwards. */
                   case 8:  // backspace
                   case 46: // delete
                      var self = this;
@@ -206,19 +212,31 @@
                      }, 1);
                      break;
 
+
+                  /* For all other keys we fire a valid or invalid 
+                     trigger. */
                   default:
                      ev.preventDefault();
 
+                     /* Figure out whay key the user pressed and check
+                        to see if it was bogus or not. */
                      var chr = this.chrFromEv( ev );
                      if( this.isViableInput( p, chr ) ) {
                         var range = new Range( this );
                         var val = this.sanityTest( range.replaceWith( chr ) );
 
+                        /* 
+                         *  We got a valid key so run the sanity check 
+                         *  against the new value and trigger the 'valid'
+                         *  event.
+                         */
                         if(val !== false){
                            this.updateSelection( chr );
                            this.formatNumber();
                         }
                         this.node.trigger( "valid", ev, this.node );
+
+                     /* Bogus key - trigger the 'invalid' event. */
                      } else {   
                         this.node.trigger( "invalid", ev, this.node );
                      } // endif 
