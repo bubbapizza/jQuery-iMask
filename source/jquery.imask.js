@@ -258,8 +258,10 @@ chrFromKey = function(key, shift) {
          maskEmptyChr   : ' ',
 
          validNumbers   : "1234567890",
-         validAlphas    : "abcdefghijklmnopqrstuvwxyz",
-         validAlphaNums : "abcdefghijklmnopqrstuvwxyz1234567890",
+         validAlphas    : 
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
+         validAlphaNums : 
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
 
          groupDigits    : 3,
          decDigits      : 2,
@@ -317,16 +319,16 @@ chrFromKey = function(key, shift) {
 
 
       allowKeys : {
-            8 : 1 // backspace
-         ,  9 : 1 // tab
-         , 13 : 1 // enter
-         , 35 : 1 // end
-         , 36 : 1 // home
-         , 37 : 1 // left
-         , 38 : 1 // up
-         , 39 : 1 // right
-         , 40 : 1 // down
-         , 46 : 1 // delete
+           "backspace" : 1
+         , "tab" : 1 
+         , "enter" : 1 
+         , "end" : 1
+         , "home" : 1 
+         , "left-arrow" : 1 
+         , "up-arrow" : 1 
+         , "right-arrow" : 1 
+         , "down-arrow" : 1
+         , "delete" : 1 
       }, 
 
 
@@ -354,20 +356,20 @@ chrFromKey = function(key, shift) {
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
-         console.log('keydown', ev);
+         var chr = chrFromKey(ev.which, ev.shiftKey);
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
             return;
 
          /****** ENTER KEY ******/
-         } else if(ev.which == 13) { // enter
+         } else if(chr == "enter") { 
             this.node.blur();
 
             this.submitForm(this.node);
 
          /****** NON-TAB KEYS ******/
-         } else if(!(ev.which == 9)) { // tab
+         } else if(!(chr == "tab")) {
 
             /* 
              *  See if we're updating a fixed-format string.
@@ -376,34 +378,32 @@ chrFromKey = function(key, shift) {
                ev.preventDefault();
 
                var p = this.getSelectionStart();
-               switch(ev.which) {
-                  case 8: // Backspace
+               switch(chr) {
+                  case "backspace":
                      this.updateSelection( this.options.maskEmptyChr );
                      this.selectPrevious();
                      break;
-                  case 36: // Home
+                  case "home":
                      this.selectFirst();
                      break;
-                  case 35: // End
+                  case "end": 
                      this.selectLast();
                      break;
-                  case 37: // Left
-                  case 38: // Up
+                  case "left-arrow":
+                  case "up-arrow": 
                      this.selectPrevious();
                      break;
-                  case 39: // Right
-                  case 40: // Down
+                  case "right-arrow":
+                  case "down-arrow":
                      this.selectNext();
                      break;
-                  case 46: // Delete
+                  case "delete":
                      this.updateSelection( this.options.maskEmptyChr );
                      this.selectNext();
                      break;
                   default:
-                     var chr = chrFromKey(ev.which, ev.shiftKey);
                      if( this._isViableFixedInput( p, chr ) ) {
-                        this.updateSelection( 
-                           ev.shiftKey ? chr.toUpperCase() : chr );
+                        this.updateSelection(chr); 
                         this.node.trigger("valid", ev, this.node);
                         this.selectNext();
                      } else {
@@ -419,22 +419,22 @@ chrFromKey = function(key, shift) {
             } else if (this.isNumber()) {
 
                /* See which key was pressed. */
-               switch(ev.which) {
+               switch(chr) {
 
                   /* For cursor movement keys, we don't do anything, 
                      just let the browser do it's thing. */
-                  case 35: // END
-                  case 36: // HOME
-                  case 37: // LEFT
-                  case 38: // UP
-                  case 39: // RIGHT
-                  case 40: // DOWN
+                  case "end":
+                  case "home": 
+                  case "left-arrow":
+                  case "up-arrow": 
+                  case "right-arrow":
+                  case "down-arrow":
                      break;
 
                   /* For backspace & delete, format the number, then 
                      apply the key and format the number afterwards. */
-                  case 8:  // backspace
-                  case 46: // delete
+                  case "backspace": 
+                  case "delete": 
                      var self = this;
                      setTimeout(function(){
                         self.formatNumber();
@@ -449,7 +449,6 @@ chrFromKey = function(key, shift) {
 
                      /* Figure out whay key the user pressed and check
                         to see if it was bogus or not. */
-                     var chr = chrFromKey(ev.which, ev.shiftKey);
                      if( this._isViableNumericInput(chr) ) {
 
                         var range = new Range(this);
@@ -461,14 +460,14 @@ chrFromKey = function(key, shift) {
                          *  event.
                          */
                         if(val !== false) {
-                           this.updateSelection( chr );
+                           this.updateSelection(chr);
                            this.formatNumber();
                         } // endif
-                        this.node.trigger( "valid", ev, this.node );
+                        this.node.trigger("valid", ev, this.node);
 
                      /* Bogus key - trigger the 'invalid' event. */
                      } else {   
-                        this.node.trigger( "invalid", ev, this.node );
+                        this.node.trigger("invalid", ev, this.node);
                      } // endif 
                      break;
                } // endswitch
@@ -484,16 +483,18 @@ chrFromKey = function(key, shift) {
        ***********/
       onKeyPress: function(ev) {
 
-         /* jQuery should normalize the keyCode property to 'which' but
-            just in case it doesn't, 'or' it with keyCode. */
+         /* Not sure why we have to do this but it appears that if
+            ev.which is 0 then ev.keycode has they keycode. */
          var key = ev.which || ev.keyCode;
+         var chr = chrFromKey(key, false); 
 
          /* 
           *  If this is not an allowed key AND none of the ctrl, alt 
           *  or meta keys are pressed, then stop propagation of this 
           *  event so nothing happens. 
           */
-         if ( !( this.allowKeys[ key ] ) && 
+         console.log("allowed?", key, chr, this.allowKeys[chr]);
+         if ( !( this.allowKeys[ chr ] ) && 
               !(ev.ctrlKey || ev.altKey || ev.metaKey)
             ) {
 
