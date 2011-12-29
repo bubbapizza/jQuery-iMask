@@ -4,11 +4,6 @@
  ***************/
 
 
-
-var myMask = ">>>,>>9.999";
-var myInt = "1234";
-var myDec = "02";
-
 DIGITS = '0123456789';
 DECIMAL_CHR = '.';
 GROUP_CHR = ',';

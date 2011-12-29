@@ -9,7 +9,7 @@
     * @requires jQuery
     * @name jQuery.iMask
     * @param {Object}    options
-    * @param {String}    options.type (number|fixed|time)
+    * @param {String}    options.type (number|fixed)
     * @param {String}    options.mask Mask using 9,a,x notation
     * @param {String}   [options.maskEmptyChr=' ']
     * @param {String}   [options.validNumbers='1234567890']
@@ -45,11 +45,6 @@
          stripMask      : false,
 
          lastFocus      : 0,
-
-         number : {
-            stripMask : false,
-            showMask  : false
-         }
       },
 
       initialize: function(node, options) {
@@ -58,7 +53,17 @@
          this.options = $.extend({}, this.options, this.options[options.type] || {}, options);
          var self     = this;
 
-         if(options.type == "number") this.node.css("text-align", "right");
+    
+         if (this.isNumber()) {
+            this.node.css("text-align", "right");
+     
+            /* If we have a mask, figure out the decDigits value. */
+            var decPos = this.options.mask.indexOf(this.options.decSymbol);
+            if (decPos > 0) {
+               this.options.decDigits = 
+                  this.options.mask.length - decPos - 1;
+            } // endif
+         } // endif
 
          this.node
             .bind( "mousedown click", function(ev) { 
@@ -114,7 +119,7 @@
             var p = this.getSelectionStart();
             this.setSelection(p, (p + 1));
          } else if(this.isNumber() ) {
-            this.setEnd();
+            this.setCursorEnd();
          } // endif
       }, // endfunction
 
@@ -142,7 +147,7 @@
             /* 
              *  See if we're updating a fixed-format string.
              */
-            if(this.options.type == "fixed") {
+            if(this.isFixed()) {
                ev.preventDefault();
 
                var p = this.getSelectionStart();
@@ -186,7 +191,7 @@
             /*
              *  See if we're updating a number.
              */
-            } else if(this.options.type == "number") {
+            } else if(this.isNumber()) {
 
                /* See which key was pressed. */
                var p = this.getSelectionStart();
@@ -284,29 +289,29 @@
          ev.stopPropagation();
          ev.preventDefault();
 
+         console.log("showmask=" + this.options.showMask);
          if (this.options.showMask) {
-             var mask = this.options.mask.toLowerCase()
-             this.domNode.value = 
-               this._wearMask(this.domNode.value, mask);
+            var mask = this.options.mask.toLowerCase()
+            this.domNode.value = 
+              this._wearMask(this.domNode.value, mask);
          } //endif 
 
          /* Run the sanity test on the text field's value. */
          this.sanityTest( this.domNode.value );
 
-         var self = this;
 
          /* 
           *  This is a weird way to position the cursor but that's what this
           *  code does.  One millisecond after the onFocus event triggers,
-          *  either selectFirst or the setEnd method gets called, depending
-          *  on the mask type. 
+          *  a function is called for positioning the cursor.
           */
+         var self = this;
          setTimeout( 
                function(){
-                  if (self.options.type === "fixed") {
-                     return self['selectFirst']();
-                  } else {
-                     return self['setEnd']();
+                  if (self.isFixed()) {
+                     self.selectFirst();
+                  } else if (self.isNumber()) {
+                     self.setCursorIntStart();
                   } // endif
                } //endfuction
                , 1 
@@ -337,94 +342,17 @@
 /**************** TEXT SELECTION ********************/
 
       /****** 
-       *  Select the entire value of the input field.
-       ******/
-      selectAll: function() {
-
-         this.setSelection(0, this.domNode.value.length);
-      }, // endfunction
-
-     
-      /****** 
-       *  Select the first updateable character in the field.
-       ******/
-      selectFirst: function() {
-
-         /* 
-          *  Search through each character in the mask until we hit a
-          *  non-mask character.  Once we hit one, select that character
-          *  in the input field.
-          */
-         for(var i = 0, len = this.options.mask.length; i < len; i++) {
-            if(this.isInputPosition(i)) {
-               this.setSelection(i, (i + 1));
-               return;
-            } // endif
-         } // endfor
-
-      }, // endfunction
-
-
-
-      /****** 
-       *  Select the last updateable character in the field.
-       ******/
-      selectLast: function() {
-
-         /* 
-          *  Search backwards through each character in the mask until we 
-          *  hit a non-mask character.  Once we hit one, select that 
-          *  character in the input field.
-          */
-         for(var i = (this.options.mask.length - 1); i >= 0; i--) {
-            if(this.isInputPosition(i)) {
-               this.setSelection(i, (i + 1));
-               return;
-            } // endif
-         } // endfor
-      }, // endfunction
-
-
-
-      selectPrevious: function(p) {
-         if( !$chk(p) ){ p = this.getSelectionStart(); }
-
-         if(p <= 0) {
-            this.selectFirst();
-         } else {
-            if(this.isInputPosition(p - 1)) {
-               this.setSelection(p - 1, p);
-            } else {
-               this.selectPrevious(p - 1);
-            } // endif
-         } // endif
-      }, // endfunction
-
-      selectNext: function(p) {
-         if( !$chk(p) ){ p = this.getSelectionEnd(); }
-
-         if( this.isNumber() ){
-            this.setSelection( p+1, p+1 );
-            return;
-         } // endif
-
-         if( p >= this.options.mask.length) {
-            this.selectLast();
-         } else {
-            if(this.isInputPosition(p)) {
-               this.setSelection(p, (p + 1));
-            } else {
-               this.selectNext(p + 1);
-            } // endif
-         } // endif
-      }, // endfunction
-
-
-      /****** 
        *  This method is the workhorse of cursor movement.  It selects
-       *  text from cursor position a to cursor position b.  Optionally,
-       *  you can leave out 'b' and just pass an array with 2 elements
-       *  in it.
+       *  text from cursor position 'a' to cursor position 'b'.  
+       *  After calling this function, the current cursor position will
+       *  be set to position 'b'.
+       *
+       *  Instead of passing two distinct integers, 'a' and 'b', you can
+       *  pass an array with 2 elements in it.
+       *
+       *  NOTE: Positions a and b are ALWAYS computed from left to
+       *  right, even if you're updating a numeric field.  
+       *  
        ******/
       setSelection: function( a, b ) {
 
@@ -457,7 +385,6 @@
       }, // endfunction
 
 
-
       /****** 
        *  Replace the currently selected text with the given string.
        ******/
@@ -475,27 +402,9 @@
       }, // endfunction
 
 
-      /****** 
-       *  Move the cursor to the end of the text field.
-       ******/
-      setEnd: function() {
-         var len = this.domNode.value.length;
-         this.setSelection(len, len);
-      }, // endfunction
-
-
-      /****** 
-       *  Return a 2 element array containing the start & end of
-       *  the current selection.  
-       ******/
-      getSelectionRange : function(){
-         return [ this.getSelectionStart(), this.getSelectionEnd() ];
-      }, // endfunction
-
-
       /******
-       *  Return the cursor position for the start of the currently
-       *  selected text.
+       *  Return the position for the start of the currently selected 
+       *  text.  This may or may not be the current cursor position.
        ******/
       getSelectionStart: function() {
          var result = 0,
@@ -528,10 +437,9 @@
       }, // endfunction
 
 
-
       /******
-       *  Return the cursor position for the end of the currently
-       *  selected text.
+       *  Return the position for the end of the currently selected 
+       *  text.  This may or may not be the current cursor position.
        ******/
       getSelectionEnd: function() {
          var result = 0,
@@ -560,6 +468,157 @@
 
          return result;
       }, // endfunction
+
+
+      /****** 
+       *  Return a 2 element array containing the start & end of
+       *  the current selection.  
+       ******/
+      getSelectionRange : function(){
+         return [ this.getSelectionStart(), this.getSelectionEnd() ];
+      }, // endfunction
+
+
+
+      /************ CURSOR POSITIONING **********/
+     
+      /****** 
+       *  Move the cursor to the end of the text field.
+       ******/
+      setCursorEnd: function() {
+         var len = this.domNode.value.length;
+         this.setSelection(len, len);
+      }, // endfunction
+
+
+      /****** 
+       *  Move the cursor to the gap immediately to the left of the
+       *  decimal point for a numeric mask.
+       ******/
+      setCursorIntStart: function() {
+         var pos;
+
+         console.log(this.domNode.value, this.options.decDigits);
+         if (this.isNumber()) {
+            pos = this.domNode.value.length - this.options.decDigits - 1;
+            console.log("pos=" + pos);
+            this.setSelection(pos, pos);
+         } // endif 
+      }, // endfunction
+      
+
+      /****** 
+       *  Move the cursor to the gap immediately to the right of the
+       *  decimal point for a numeric mask.
+       ******/
+      setCursorDecStart: function() {
+         var pos;
+
+         if (this.isNumber()) {
+            pos = this.domNode.value.length - this.options.decDigits;
+            this.setSelection(pos, pos);
+         } // endif 
+      }, // endfunction
+
+
+
+
+      /************ SELECT FIXED FIELD CHARACTERS **********/
+
+      /****** 
+       *  Select the entire value of the input field.
+       ******/
+      selectAll: function() {
+
+         this.setSelection(0, this.domNode.value.length);
+      }, // endfunction
+
+     
+      /****** 
+       *  Select the first updateable character in the field.
+       ******/
+      selectFirst: function() {
+
+         /* 
+          *  Search through each character in the mask until we hit a
+          *  non-mask character.  Once we hit one, select that character
+          *  in the input field.
+          */
+         for(var i = 0, len = this.options.mask.length; i < len; i++) {
+            if(this.isInputPosition(i)) {
+               this.setSelection(i, (i + 1));
+               return;
+            } // endif
+         } // endfor
+
+      }, // endfunction
+
+
+      /****** 
+       *  Select the last updateable character in the field.
+       ******/
+      selectLast: function() {
+
+         /* 
+          *  Search backwards through each character in the mask until we 
+          *  hit a non-mask character.  Once we hit one, select that 
+          *  character in the input field.
+          */
+         for(var i = (this.options.mask.length - 1); i >= 0; i--) {
+            if(this.isInputPosition(i)) {
+               this.setSelection(i, (i + 1));
+               return;
+            } // endif
+         } // endfor
+      }, // endfunction
+
+
+      /****** 
+       *  Select the previous updateable character in the field.
+       ******/
+      selectPrevious: function(p) {
+         if( !$chk(p) ){ p = this.getSelectionStart(); }
+
+         if(p <= 0) {
+            this.selectFirst();
+         } else {
+            if(this.isInputPosition(p - 1)) {
+               this.setSelection(p - 1, p);
+            } else {
+               this.selectPrevious(p - 1);
+            } // endif
+         } // endif
+      }, // endfunction
+
+
+      /****** 
+       *  Select the next updateable character in the field.
+       ******/
+      selectNext: function(p) {
+         if( !$chk(p) ){ p = this.getSelectionEnd(); }
+
+         if( this.isNumber() ){
+            this.setSelection( p+1, p+1 );
+            return;
+         } // endif
+
+         if( p >= this.options.mask.length) {
+            this.selectLast();
+         } else {
+            if(this.isInputPosition(p)) {
+               this.setSelection(p, (p + 1));
+            } else {
+               this.selectNext(p + 1);
+            } // endif
+         } // endif
+      }, // endfunction
+
+
+
+      /************ SELECT NUMERIC FIELD CHARACTERS **********/
+
+
+
 
 
 
@@ -678,7 +737,6 @@
        *  Called from isViableInput, used for validating numbers.
        ******/
       _isViableNumericInput : function( p, chr ){
-         console.log('viable', this.options.validNumbers, chr);
          return !(this.options.validNumbers.indexOf( chr ) < 0);
       }, // endfunction
 
@@ -690,6 +748,18 @@
        *  Apply this field's mask to a given string.
        ******/
       _wearMask: function(str, mask) {
+
+         /* If this is a number field, format it as a number and leave. */
+         if (this.isNumber()) { 
+            var self = this;
+            setTimeout(function(){
+               self.formatNumber();
+            }, 1);
+            return;
+         } // endif
+
+
+            
          var output = ""
           , chrSets = {
               '9' : 'validNumbers'
@@ -751,35 +821,6 @@
       }, // endfunction
 
 
-
-      /******
-       *  Apply this field's number mask.  Pass the integer and
-       *  decimal portions of the number separately.
-       ******/
-      _wearNumMask: function(strInt, strDec, mask) {
-         var mask, decPtr, intMask, decMask;
-
-         console.log("_wearNumMask", strInt, strDec);
-
-         /* Figure out the integer portion of the mask and the
-            decimal portion of the mask. */
-         decPtr = mask.indexOf(this.options.decSymbol);
-         if (decPtr < 0) {
-            intMask = mask;
-            decMask = '';
-         } else {
-            intMask = mask.substring(0, decPtr);
-            decMask = mask.substring(decPtr + 1);
-         } // endif
-
-
-         console.log('xxx', strInt, intMask);
-         var wearIntMask = this._wearMask(strInt, intMask);
-         console.log("wearIntMask=", wearIntMask);
-         
-
-         return;
-      }, // endfunction
 
 
       /******
@@ -868,7 +909,26 @@
          var strDecimal;
          var regExp;
          console.log("formatNumber");
+         console.log(range);
 
+         /******* FIXED NUMBER MASK ******/
+
+         /* 
+          *  If this field has a number mask, then apply it and we're
+          *  done. 
+          */
+         if (this.options.mask) {
+            this.domNode.value = wearNumMask(
+               this.domNode.value, this.options.mask);
+
+               /* Reset the selection range. */
+               this.setSelection( range );
+            return;
+         } // endif
+
+
+
+         /******* VARIABLE NUMBER MASK *******/ 
 
          /* Clean up the input value by stripping away the mask and any
             leading zeros. */
@@ -887,16 +947,6 @@
          strInteger = cleanVal.substring(
             0, (cleanVal.length - this.options.decDigits))
 
-
-         /* 
-          *  If this field has a number mask, then apply it and we're
-          *  done. 
-          */
-         if (this.options.mask) {
-            this._wearNumMask(strInteger, strDecimal);
-            return;
-         } // endif
-       
 
          /* 
           *  Add grouping symbols to the integer portion using a regular
@@ -941,6 +991,19 @@
 
 /**************** RANGE OBJECT ********************/
 
+
+   /*********
+    *  The Range object is used for getting the currently selected
+    *  text of the iMask field passed to it.  
+    *
+    *  @param {object} obj
+    *    the iMask object that this range is for.
+    *  @param {integer} len
+    *    The length of the value in the input field
+    *  @param {Array(2)} range
+    *    The start and end position of the currently selected text.
+    *********/
+    
    function Range( obj ) {
       this.range = obj.getSelectionRange();
       this.len   = obj.domNode.value.length
@@ -964,6 +1027,8 @@
       } // endfunction
    };
 
+
+/**************** JQUERY PLUGIN STUFF *************/
 
    $.fn.iMask = function(options){
       this.each(function(){
