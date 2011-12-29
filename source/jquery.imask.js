@@ -9,7 +9,7 @@
  *    shift key was held down while the key was pressed.
  *  
  ******/
-chrFromKey: function(key, shift) {
+chrFromKey = function(key, shift) {
    var chr = ''
      , keys = {
             8 : "backspace"
@@ -70,21 +70,21 @@ chrFromKey: function(key, shift) {
         ,  91 : "left-window-key"
         ,  92 : "right-window-key"
         ,  93 : "select-key"
-        ,  96 : "numpad-0"
-        ,  97 : "numpad-1"
-        ,  98 : "numpad-2"
-        ,  99 : "numpad-3"
-        , 100 : "numpad-4"
-        , 101 : "numpad-5"
-        , 102 : "numpad-6"
-        , 103 : "numpad-7"
-        , 104 : "numpad-8"
-        , 105 : "numpad-9"
-        , 106 : "multiply"
-        , 107 : "add"
-        , 109 : "subtract"
-        , 110 : "decimal-point"
-        , 111 : "divide"
+        ,  96 : "0"
+        ,  97 : "1"
+        ,  98 : "2"
+        ,  99 : "3"
+        , 100 : "4"
+        , 101 : "5"
+        , 102 : "6"
+        , 103 : "7"
+        , 104 : "8"
+        , 105 : "9"
+        , 106 : "*"
+        , 107 : "+"
+        , 109 : "-"
+        , 110 : "."
+        , 111 : "/"
         , 112 : "f1"
         , 113 : "f2"
         , 114 : "f3"
@@ -99,17 +99,17 @@ chrFromKey: function(key, shift) {
         , 123 : "f12"
         , 144 : "num-lock"
         , 145 : "scroll-lock"
-        , 186 : "semi-colon"
-        , 187 : "equal-sign"
-        , 188 : "comma"
-        , 189 : "dash"
-        , 190 : "period"
-        , 191 : "forward-slash"
-        , 192 : "grave-accent"
-        , 219 : "open-bracket"
-        , 220 : "back-slash"
-        , 221 : "close-braket"
-        , 222 : "single-quote"
+        , 186 : ";"
+        , 187 : "="
+        , 188 : ","
+        , 189 : "-"
+        , 190 : "."
+        , 191 : "/"
+        , 192 : "`"
+        , 219 : "["
+        , 220 : "\\"
+        , 221 : "]"
+        , 222 : "'"
        } 
      , shiftkeys = {
             8 : "backspace"
@@ -170,17 +170,17 @@ chrFromKey: function(key, shift) {
         ,  91 : "shift-left-window-key"
         ,  92 : "shift-right-window-key"
         ,  93 : "select-key"
-        ,  96 : "numpad-0"
-        ,  97 : "numpad-1"
-        ,  98 : "numpad-2"
-        ,  99 : "numpad-3"
-        , 100 : "numpad-4"
-        , 101 : "numpad-5"
-        , 102 : "numpad-6"
-        , 103 : "numpad-7"
-        , 104 : "numpad-8"
-        , 105 : "numpad-9"
-        , 106 : "multiply"
+        ,  96 : "0"
+        ,  97 : "1"
+        ,  98 : "2"
+        ,  99 : "3"
+        , 100 : "4"
+        , 101 : "5"
+        , 102 : "6"
+        , 103 : "7"
+        , 104 : "8"
+        , 105 : "9"
+        , 106 : "*"
         , 107 : "+"
         , 109 : "-"
         , 110 : "."
@@ -205,29 +205,20 @@ chrFromKey: function(key, shift) {
         , 189 : "_"
         , 190 : ">"
         , 191 : "?"
-        , 192 : "grave-accent"
+        , 192 : "~"
         , 219 : "{"
         , 220 : "|"
         , 221 : "}"
         , 222 : '"'
        };
 
-   console.log("key=", key, keys[key]); 
+   console.log("key=", key, shift, keys[key], shiftkeys[key]); 
 
-   /* Shift number-pad numbers to corresponding character codes. */
-   if (key >= 96 && key <= 105) { 
-      key -= 48; 
-
-   /* MINUS SIGN */
-   } else if (key == 109 || key == 189 || key == 45) {
-      return '-';
-
-   /* PERIOD */
-   } else if (key == 190 || key == 46) {
-      return '.';
+   if (shift) {
+      return shiftkeys[key];
+   } else {
+      return keys[key];
    } // endif
-
-   return keys[key];
 }, // endfunction
 
 
@@ -409,7 +400,7 @@ chrFromKey: function(key, shift) {
                      this.selectNext();
                      break;
                   default:
-                     var chr = this.chrFromEv(ev);
+                     var chr = chrFromKey(ev.which, ev.shiftKey);
                      if( this._isViableFixedInput( p, chr ) ) {
                         this.updateSelection( 
                            ev.shiftKey ? chr.toUpperCase() : chr );
@@ -458,7 +449,7 @@ chrFromKey: function(key, shift) {
 
                      /* Figure out whay key the user pressed and check
                         to see if it was bogus or not. */
-                     var chr = this.chrFromEv(ev);
+                     var chr = chrFromKey(ev.which, ev.shiftKey);
                      if( this._isViableNumericInput(chr) ) {
 
                         var range = new Range(this);
