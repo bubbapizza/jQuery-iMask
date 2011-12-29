@@ -57,7 +57,7 @@
          if (this.isNumber()) {
             this.node.css("text-align", "right");
      
-            /* If we have a mask, figure out the decDigits value. */
+            /* If we have a mask, figure out the decDigits option. */
             var decPos = this.options.mask.indexOf(this.options.decSymbol);
             if (decPos > 0) {
                this.options.decDigits = 
@@ -176,7 +176,7 @@
                      break;
                   default:
                      var chr = this.chrFromEv(ev);
-                     if( this.isViableInput( p, chr ) ) {
+                     if( this._isViableFixedInput( p, chr ) ) {
                         this.updateSelection( 
                            ev.shiftKey ? chr.toUpperCase() : chr );
                         this.node.trigger("valid", ev, this.node);
@@ -191,10 +191,9 @@
             /*
              *  See if we're updating a number.
              */
-            } else if(this.isNumber()) {
+            if(this.isNumber()) {
 
                /* See which key was pressed. */
-               var p = this.getSelectionStart();
                switch(ev.which) {
 
                   /* For cursor movement keys, we don't do anything, 
@@ -225,20 +224,21 @@
 
                      /* Figure out whay key the user pressed and check
                         to see if it was bogus or not. */
-                     var chr = this.chrFromEv( ev );
-                     if( this.isViableInput( p, chr ) ) {
-                        var range = new Range( this );
-                        var val = this.sanityTest( range.replaceWith( chr ) );
+                     var chr = this.chrFromEv(ev);
+                     if( this._isViableNumericInput(chr) ) {
+
+                        var range = new Range(this);
+                        var val = this.sanityTest(range.replaceWith(chr));
 
                         /* 
                          *  We got a valid key so run the sanity check 
                          *  against the new value and trigger the 'valid'
                          *  event.
                          */
-                        if(val !== false){
+                        if(val !== false) {
                            this.updateSelection( chr );
                            this.formatNumber();
-                        }
+                        } // endif
                         this.node.trigger( "valid", ev, this.node );
 
                      /* Bogus key - trigger the 'invalid' event. */
@@ -498,10 +498,8 @@
       setCursorIntStart: function() {
          var pos;
 
-         console.log(this.domNode.value, this.options.decDigits);
          if (this.isNumber()) {
             pos = this.domNode.value.length - this.options.decDigits - 1;
-            console.log("pos=" + pos);
             this.setSelection(pos, pos);
          } // endif 
       }, // endfunction
@@ -615,12 +613,6 @@
 
 
 
-      /************ SELECT NUMERIC FIELD CHARACTERS **********/
-
-
-
-
-
 
 /**************** VALIDATION ********************/
 
@@ -690,25 +682,8 @@
 
 
       /******
-       *  This method returns boolean value indicating if the given 
-       *  character, typed at the given cursor position is valid.
-       ******/
-      isViableInput: function(p, chr) {
-
-         /* For fixed string fields, call isViableFixedInput. */
-         if (this.isFixed()) {
-            return this._isViableFixedInput(p, chr);
-
-         /* For number fields, call isViableNumericInput. */
-         } else if (this.isNumber()) {
-            return this._isViableNumericInput(p, chr);
-         } // endif 
-
-      }, // endfunction
-
-
-      /******
-       *  Called from isViableInput, used for validating fixed strings.
+       *  This function checks to see if a fixed input character is
+       *  valide based on the current cursor position.
        ******/
       _isViableFixedInput : function( p, chr ){
          var mask   = this.options.mask.toLowerCase();
@@ -734,10 +709,15 @@
 
 
       /******
-       *  Called from isViableInput, used for validating numbers.
+       *  This function checks to make sure the given character is
+       *  a valid keystroke that can be pressed while typing in a number. 
        ******/
-      _isViableNumericInput : function( p, chr ){
-         return !(this.options.validNumbers.indexOf( chr ) < 0);
+      _isViableNumericInput : function(chr){
+         /* See if the character is a numeric digit. */
+         var validDigit = !(this.options.validNumbers.indexOf( chr ) < 0);
+
+         /* The character may also be a decimal symbol. */
+         return validDigit || (chr == this.options.decSymbol)
       }, // endfunction
 
 
@@ -877,7 +857,7 @@
            , key = ev.which;
 
          /* Shift number-pad numbers to corresponding character codes. */
-         console.log("key=", key);
+         console.log("key=", key, String.fromCharCode(key)); 
          if (key >= 96 && key <= 105) { 
             key -= 48; 
 
@@ -890,9 +870,24 @@
             return '.';
          } // endif
 
+                  /* For cursor movement keys, we don't do anything, 
+                     just let the browser do it's thing. */
+                  case 35: // END
+                  case 36: // HOME
+                  case 37: // LEFT
+                  case 38: // UP
+                  case 39: // RIGHT
+                  case 40: // DOWN
+                     break;
+
+                  /* For backspace & delete, format the number, then 
+                     apply the key and format the number afterwards. */
+                  case 8:  // backspace
+                  case 46: // delete
+
 
          /* Convert the key pressed to lower case. */
-         chr = String.fromCharCode(key).toLowerCase(); 
+         chr = String.fromCharCode(key); 
 
          return chr;
       }, // endfunction
