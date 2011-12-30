@@ -158,7 +158,8 @@ wearNumMask = function(numStr, mask) {
    /*
     *  Check for number too large for mask!!!
     */
-   if (intStrPtr > 0) {
+   // console.log("intstrptr=", intStrPtr, numStr);
+   if (intStrPtr >= 0) {
       throw "MASK SIZE EXCEEDED";
    } // endif
 

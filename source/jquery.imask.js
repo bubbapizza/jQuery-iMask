@@ -131,7 +131,7 @@
        ***********/
       onKeyDown: function(ev) {
          /* Get the ascii representation of what key the user pressed. */
-         var chr = chrFromKey(ev.which, ev.shiftKey);
+         var chr = keylib.chrFromKey(ev.which, ev.shiftKey);
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
@@ -223,6 +223,8 @@
 
                /* Check for digits. */
                } else if (keylib.isDigit(chr)) {
+                  /* Cancel the event but allow further propagation. */
+                  console.log('keydown', this.domNode.value);
 
                   /* See if the key would pass the sanity test. */
                   var range = new Range(this);
@@ -231,8 +233,12 @@
                   /* If the sanity test passed, then apply the 
                      key. */ 
                   if(val !== false) {
-                     this.updateSelection(chr);
-                     this.formatNumber();
+                     try {
+                        this.updateSelection(chr);
+                        this.formatNumber();
+                     } catch(err) {
+                        console.log(err, this.domNode.value);
+                     } // endcatch
                   } // endif
                   this.node.trigger("valid", ev, this.node);
 
@@ -256,16 +262,15 @@
       onKeyPress: function(ev) {
 
          /* Not sure why we have to do this but it appears that if
-            ev.which is 0 then ev.keycode has they keycode. */
+            ev.which is 0 then ev.keycode has the keycode. */
          var key = ev.which || ev.keyCode;
-         var chr = chrFromKey(key, false); 
+         var chr = keylib.chrFromKey(key, false); 
 
          /* 
           *  If this is not an allowed key AND none of the ctrl, alt 
           *  or meta keys are pressed, then stop propagation of this 
           *  event so nothing happens. 
           */
-         console.log("allowed?", key, chr, this.allowKeys[chr]);
          if ( !( this.allowKeys[ chr ] ) && 
               !(ev.ctrlKey || ev.altKey || ev.metaKey)
             ) {
@@ -706,18 +711,6 @@
       }, // endfunction
 
 
-      /******
-       *  This function checks to make sure the given character is
-       *  a valid keystroke that can be pressed while typing in a number. 
-       ******/
-      _isViableNumericInput : function(chr){
-         /* See if the character is a numeric digit. */
-         var validDigit = !(this.options.validNumbers.indexOf( chr ) < 0);
-
-         /* The character may also be a decimal symbol. */
-         return validDigit || (chr == this.options.decSymbol)
-      }, // endfunction
-
 
 
 /**************** MASKING ********************/
@@ -850,15 +843,8 @@
        *  Format a number field based on the options set.
        ******/
       formatNumber: function() {
-         var cleanVal; 
          var range = new Range(this);
-         var strInteger;
-         var strDecimal;
-         var regExp;
-         console.log("formatNumber");
-         console.log(range);
 
-         /******* FIXED NUMBER MASK ******/
 
          /* 
           *  If this field has a number mask, then apply it and we're
@@ -868,58 +854,11 @@
             this.domNode.value = wearNumMask(
                this.domNode.value, this.options.mask);
 
-               /* Reset the selection range. */
-               this.setSelection( range );
+            /* Reset the selection range. */
+            this.setSelection( range );
             return;
          } // endif
 
-
-
-         /******* VARIABLE NUMBER MASK *******/ 
-
-         /* Clean up the input value by stripping away the mask and any
-            leading zeros. */
-         cleanVal = this.stripMask().replace(/^0+/, '' );
-          
-         /* If the cleaned up number has less digits than the number
-            of decimal digits, then then we have to pad it with zeros. */
-         for(var i = cleanVal.length; i <= this.options.decDigits; i++) {
-            cleanVal = "0" + cleanVal;
-         } // endfor
-
-
-         /* Figure out the decimal and integer portion of the number. */
-         strDecimal = cleanVal.substr(
-            cleanVal.length - this.options.decDigits)
-         strInteger = cleanVal.substring(
-            0, (cleanVal.length - this.options.decDigits))
-
-
-         /* 
-          *  Add grouping symbols to the integer portion using a regular
-          *  expression. 
-          */
-
-         /* Build the regular expression string for groups of digits. */
-         regExp = new RegExp(
-            "(\\d+)(\\d{"+ this.options.groupDigits +"})");
-
-         /* Put commas in between the digit groups. */
-         while(regExp.test(strInteger)) {
-            strInteger = strInteger.replace(
-               regExp, "$1"+ this.options.groupSymbol +"$2");
-         } // endwhile
-
-
-         /* 
-          *  Put everything together and save it in the input field.
-          */
-         this.domNode.value = this.options.currencySymbol + 
-            strInteger + this.options.decSymbol + strDecimal;
-
-         
-         /* Reset the selection range. */
-         this.setSelection( range );
       }, // endfunction
 
 

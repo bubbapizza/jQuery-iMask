@@ -102,7 +102,7 @@ keylib = {
       , 222 : "'"
    },
  
-   shiftkeys = {
+   shiftkeys : {
           8 : "backspace"
       ,   9 : "tab"
       ,  13 : "enter"
@@ -209,6 +209,22 @@ keylib = {
     ******/
    isDigit : function(str) {
       return (this.digits.indexOf(str[0]) >= 0);
+   }, // endfunction
+
+
+   /******
+    *  Simple function to test a character to see if it's alphabetic.
+    ******/
+   isAlpha : function(str) {
+      return (this.alpha.indexOf(str[0]) >= 0);
+   }, // endfunction
+
+
+   /******
+    *  Simple function to test a character to see if it's alphanumeric.
+    ******/
+   isAlphaNum : function(str) {
+      return (this.isAlpha(str) || this.isDigit(str));
    }, // endfunction
 
 
