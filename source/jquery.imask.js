@@ -868,6 +868,7 @@
       formatNumber: function() {
          var editDecimal, newPos;
          var range = new Range(this);
+         console.log('range', range);
 
          /* Are we editing the decimal portion of the number? */
          if (range[1] > this._getDecPos(this.domNode.value)) {
@@ -878,7 +879,7 @@
 
 
          /* If this field has a number mask, then apply it. */
-         console.log(range[0], range[1]);
+         console.log("decimal?", editDecimal);
          if (this.options.mask) {
 
             var nmask = wearNumMask(
@@ -886,12 +887,15 @@
             console.log("nmask", nmask);
             this.domNode.value = nmask;
 
-            /* Unselect any selected text. */
-            if (range[0] != range[1]) {
-               this.setSelection(range[1], range[1]);
-            } else { 
-               console.log('val', range.valueOf());
-               this.setSelection(range);
+            /* Since the input value make have shrunk in size, we
+               have to get the new selection range.  The cursor will
+               be positioned at the end of the selection range. */
+            var pos = range.valueOf()[1]
+            console.log('r2', range[0], range[1], range.valueOf());
+            if (editDecimal == false) {
+               this.setSelection(pos, pos);
+            } else {
+               this.setSelection(pos + 1, pos + 1);
             } // endif
               
             return;
@@ -930,6 +934,7 @@
     
    function Range( obj ) {
       this.range = obj.getSelectionRange();
+      this.buffer = obj.domNode.value;
       this.len = obj.domNode.value.length
       console.log("nodeval='" + typeof(obj.domNode.value) + "'");
       this.obj   = obj;
@@ -939,9 +944,15 @@
    } // endfunction
 
    Range.prototype = {
+
+      /*****
+       *  The valueOf function always returns what the current selection
+       *  range should be.  range[0] and range[1] record what the 
+       *  range was when the object was instantiated.
+       *****/
       valueOf : function(){
          var len = this.len - this.obj.domNode.value.length;
-         console.log("valof", this.len, this.obj.domNode.value.length, this.range[0], this.range[1]);
+         console.log("VALOF**", this.buffer, this.obj.domNode.value, this.range[0], this.range[1]);
          return [ this.range[0] - len, this.range[1] - len ];
       }, // endfunction
 
