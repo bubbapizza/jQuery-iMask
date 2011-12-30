@@ -37,7 +37,6 @@
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
          validAlphaNums : 
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
-
          groupDigits    : 3,
          decDigits      : 2,
          currencySymbol : '',
@@ -131,6 +130,7 @@
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
+         /* Get the ascii representation of what key the user pressed. */
          var chr = chrFromKey(ev.which, ev.shiftKey);
 
          /****** CTRL, ALT, META KEYS******/
@@ -193,59 +193,56 @@
              */
             } else if (this.isNumber()) {
 
-               /* See which key was pressed. */
-               switch(chr) {
+               /* 
+                *  See which key was pressed. 
+                */
 
-                  /* For cursor movement keys, we don't do anything, 
-                     just let the browser do it's thing. */
-                  case "end":
-                  case "home": 
-                  case "left-arrow":
-                  case "up-arrow": 
-                  case "right-arrow":
-                  case "down-arrow":
-                     break;
+               /* For cursor movement keys, we don't do anything, 
+                  just let the browser do it's thing. */
+               if (   chr == "end"
+                   || chr == "home"
+                   || chr == "left-arrow"
+                   || chr == "up-arrow" 
+                   || chr == "right-arrow"
+                   || chr == "down-arrow") {
+                  null;
+                     
 
-                  /* For backspace & delete, format the number, then 
-                     apply the key and format the number afterwards. */
-                  case "backspace": 
-                  case "delete": 
-                     var self = this;
-                     setTimeout(function(){
-                        self.formatNumber();
-                     }, 1);
-                     break;
+               /* For backspace & delete, let the browser do its
+                  thing, then 1 millisecond later, format the 
+                  number. */
+               } else if (
+                     chr == "backspace"
+                  || chr == "delete") {
+
+                  var self = this;
+                  setTimeout(function(){
+                     self.formatNumber();
+                  }, 1);
 
 
-                  /* For all other keys we fire a valid or invalid 
-                     trigger. */
-                  default:
-                     ev.preventDefault();
+               /* Check for digits. */
+               } else if (keylib.isDigit(chr)) {
 
-                     /* Figure out whay key the user pressed and check
-                        to see if it was bogus or not. */
-                     if( this._isViableNumericInput(chr) ) {
+                  /* See if the key would pass the sanity test. */
+                  var range = new Range(this);
+                  var val = this.sanityTest(range.replaceWith(chr));
 
-                        var range = new Range(this);
-                        var val = this.sanityTest(range.replaceWith(chr));
+                  /* If the sanity test passed, then apply the 
+                     key. */ 
+                  if(val !== false) {
+                     this.updateSelection(chr);
+                     this.formatNumber();
+                  } // endif
+                  this.node.trigger("valid", ev, this.node);
 
-                        /* 
-                         *  We got a valid key so run the sanity check 
-                         *  against the new value and trigger the 'valid'
-                         *  event.
-                         */
-                        if(val !== false) {
-                           this.updateSelection(chr);
-                           this.formatNumber();
-                        } // endif
-                        this.node.trigger("valid", ev, this.node);
 
-                     /* Bogus key - trigger the 'invalid' event. */
-                     } else {   
-                        this.node.trigger("invalid", ev, this.node);
-                     } // endif 
-                     break;
-               } // endswitch
+               /* BAD KEY PRESSED */
+               } else {
+                  /* Cancel the event but allow further propagation. */
+                  ev.preventDefault();
+                  this.node.trigger("invalid", ev, this.node);
+               } // endif 
 
             } // endif 
          } // endif 

@@ -4,18 +4,8 @@
  ***************/
 
 
-DIGITS = '0123456789';
 DECIMAL_CHR = '.';
 GROUP_CHR = ',';
-
-/******
- *  Simple function to test a character to see if it's a digit.
- ******/
-isDigit = function(str) {
-   return (DIGITS.indexOf(str[0]) >= 0);
-} // endfunction
-
-
 
 /******
  *  Simple function to strip out all non-numeric info from a string and
@@ -25,7 +15,9 @@ stripAlpha = function(str) {
    var output = '';
 
    for (var i = 0; i < str.length; i += 1) {
-      if (isDigit(str[i]) || str[i] == '-' || str[i] == DECIMAL_CHR) {
+      if (keylib.isDigit(str[i]) 
+          || str[i] == '-'
+          || str[i] == DECIMAL_CHR) {
          output += str[i];
       } // endif
    } // endfor
@@ -107,7 +99,7 @@ wearNumMask = function(numStr, mask) {
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it.*/
             if (intStrPtr >= 0) {
-               if (isDigit(intStr[intStrPtr])) {
+               if (keylib.isDigit(intStr[intStrPtr])) {
                   output = intStr[intStrPtr] + output;
                   intStrPtr -= 1;
                } // endif
@@ -149,7 +141,7 @@ wearNumMask = function(numStr, mask) {
             /* As long as we still have characters in the string left
                AND the next character is a digit, then we can put in a 
                group character. */
-            if ((intStrPtr >= 0) && (isDigit(intStr[intStrPtr]))) {
+            if ((intStrPtr >= 0) && (keylib.isDigit(intStr[intStrPtr]))) {
                output = GROUP_CHR + output;
             } // endif
          break;
