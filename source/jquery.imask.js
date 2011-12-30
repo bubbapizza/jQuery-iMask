@@ -204,9 +204,24 @@
                      chr == "backspace"
                   || chr == "delete") {
 
+                  var pos = range.valueOf()[1]
+                  var decPos = this._getDecPos(this.domNode.value);
+
+                  /* If the user tries to delete the decimal point, 
+                     prevent the key from getting applied whatsoever. */
+                  console.log("DDDDD", pos, decPos);
+                  if (pos == (decPos + 1) && chr == "backspace") {
+                     ev.preventDefault();
+                     ev.stopPropagation();
+
+                  } else if ((pos == decPos) && chr == "delete") {
+                     ev.preventDefault();
+                     ev.stopPropagation();
+                  } // endif
+                  
                   var self = this;
                   setTimeout(function(){
-                     self.formatNumber();
+                     self.delFormatNumber();
                   }, 1);
 
 
@@ -903,6 +918,44 @@
 
       }, // endfunction
 
+
+      /******
+       *  Format a number field based on the options set.
+       ******/
+      delFormatNumber: function() {
+         var editDecimal, newPos;
+         var range = new Range(this);
+         var decPos = this._getDecPos(this.domNode.value);
+
+         /* Are we editing the decimal portion of the number? */
+         if (range[1] > decPos) {
+            editDecimal = true;
+         } else {
+            editDecimal = false;
+         } // endif
+
+
+         /* If this field has a number mask, then apply it. */
+         if (this.options.mask) {
+
+            var nmask = wearNumMask(
+               this.domNode.value, this.options.mask);
+            this.domNode.value = nmask;
+
+            /* Since the input value make have shrunk in size, we
+               have to get the new selection range.  The cursor will
+               be positioned at the end of the selection range. */
+            var pos = range.valueOf()[1]
+            if (editDecimal == false) {
+               this.setSelection(pos, pos);
+            } else {
+               this.setSelection(pos - 1, pos - 1);
+            } // endif
+              
+            return;
+         } // endif
+
+      }, // endfunction
 
 
       /******
