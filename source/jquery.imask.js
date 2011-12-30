@@ -233,11 +233,14 @@
                   /* If the sanity test passed, then apply the 
                      key. */ 
                   if(val !== false) {
+                     var oldValue = this.domNode.value;
                      try {
                         this.updateSelection(chr);
                         this.formatNumber();
                      } catch(err) {
-                        console.log(err, this.domNode.value);
+                        this.domNode.value = oldValue;
+                        this.setSelection(range);
+                        console.log(err, this.domNode.value, range);
                      } // endcatch
                   } // endif
                   this.node.trigger("valid", ev, this.node);
@@ -843,19 +846,16 @@
        *  Format a number field based on the options set.
        ******/
       formatNumber: function() {
+         /* Record the currently selected text. */
          var range = new Range(this);
 
-
-         /* 
-          *  If this field has a number mask, then apply it and we're
-          *  done. 
-          */
+         /* If this field has a number mask, then apply it. */
          if (this.options.mask) {
             this.domNode.value = wearNumMask(
                this.domNode.value, this.options.mask);
 
-            /* Reset the selection range. */
-            this.setSelection( range );
+            /* Reset the selected text. */
+            this.setSelection(range);
             return;
          } // endif
 
