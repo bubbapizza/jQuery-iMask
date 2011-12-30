@@ -15,8 +15,6 @@
     * @param {String}   [options.validNumbers='1234567890']
     * @param {String}   [options.validAlphas='abcdefghijklmnopqrstuvwxyz']
     * @param {String}   [options.validAlphaNums='abcdefghijklmnopqrstuvwxyz1234567890']
-    * @param {Number}   [options.groupDigits=3]
-    * @param {Number}   [options.decDigits=2]
     * @param {String}   [options.currencySymbol]
     * @param {String}   [options.groupSymbol=',']
     * @param {String}   [options.decSymbol='.']
@@ -37,8 +35,6 @@
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
          validAlphaNums : 
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
-         groupDigits    : 3,
-         decDigits      : 2,
          currencySymbol : '',
          groupSymbol    : ',',
          decSymbol      : '.',
@@ -57,13 +53,6 @@
     
          if (this.isNumber()) {
             this.node.css("text-align", "right");
-     
-            /* If we have a mask, figure out the decDigits option. */
-            var decPos = this.options.mask.indexOf(this.options.decSymbol);
-            if (decPos > 0) {
-               this.options.decDigits = 
-                  this.options.mask.length - decPos - 1;
-            } // endif
          } // endif
 
          this.node
@@ -130,8 +119,10 @@
        * KEY DOWN
        ***********/
       onKeyDown: function(ev) {
-         /* Get the ascii representation of what key the user pressed. */
+         /* Get the ascii representation of what key the user pressed
+            and the currently selected text. */
          var chr = keylib.chrFromKey(ev.which, ev.shiftKey);
+         var range = new Range(this);
 
          /****** CTRL, ALT, META KEYS******/
          if(ev.ctrlKey || ev.altKey || ev.metaKey) {
@@ -146,9 +137,8 @@
          /****** NON-TAB KEYS ******/
          } else if(!(chr == "tab")) {
 
-            /* 
-             *  See if we're updating a fixed-format string.
-             */
+
+            /****** CHARACTER MASK ******/
             if(this.isFixed()) {
                ev.preventDefault();
 
@@ -188,9 +178,8 @@
                } // endswitch
 
 
-            /*
-             *  See if we're updating a number.
-             */
+
+            /****** NUMBER MASK ******/
             } else if (this.isNumber()) {
 
                /* 
@@ -221,18 +210,34 @@
                   }, 1);
 
 
+               /* If user pressed period, then move the cursor to the
+                  spot just to the right of the decimal point. */
+               } else if (
+                     chr == ".") {
+
+                  /* Prevent the key from getting applied whatsoever. */
+                  ev.preventDefault();
+                  ev.stopPropagation();
+
+                  var self = this;
+                  setTimeout(
+                     function(){
+                        self.setCursorDecStart();
+                     } //endfuction
+                     , 1);
+                  this.node.trigger("valid", ev, this.node);
+
+
                /* Check for digits. */
                } else if (keylib.isDigit(chr)) {
-                  /* Cancel the event but allow further propagation. */
-                  console.log('keydown', this.domNode.value);
 
-                  /* See if the key would pass the sanity test. */
-                  var range = new Range(this);
+                  /* If the key passes the sanity test then apply it. */
                   var val = this.sanityTest(range.replaceWith(chr));
-
-                  /* If the sanity test passed, then apply the 
-                     key. */ 
                   if(val !== false) {
+
+                     /* If the key blows the size of the number mask,
+                        catch the error and leave things the way they
+                        are. */
                      var oldValue = this.domNode.value;
                      try {
                         this.updateSelection(chr);
@@ -240,8 +245,8 @@
                      } catch(err) {
                         this.domNode.value = oldValue;
                         this.setSelection(range);
-                        console.log(err, this.domNode.value, range);
                      } // endcatch
+
                   } // endif
                   this.node.trigger("valid", ev, this.node);
 
@@ -295,15 +300,15 @@
          ev.stopPropagation();
          ev.preventDefault();
 
-         console.log("showmask=" + this.options.showMask);
+         console.log("'" + this.domNode.value + "'", "valtype=", typeof(this.domNode.value));
          if (this.options.showMask) {
-            var mask = this.options.mask.toLowerCase()
             this.domNode.value = 
-              this._wearMask(this.domNode.value, mask);
+              this._wearMask(this.domNode.value, this.options.mask);
          } //endif 
 
          /* Run the sanity test on the text field's value. */
-         this.sanityTest( this.domNode.value );
+         // this.sanityTest( this.domNode.value );
+         console.log("2'" + this.domNode.value + "'", "valtype=", typeof(this.domNode.value));
 
 
          /* 
@@ -372,6 +377,7 @@
             a = a[0];
          }
 
+         console.log("setselection", a, b);
          /* If the browser supports setSelectionRange, then just 
             call it. */
          if(this.domNode.setSelectionRange) {
@@ -488,6 +494,18 @@
 
       /************ CURSOR POSITIONING **********/
      
+      
+      /****** 
+       *  Get the position of the decimal point in a string.
+       ******/
+      _getDecPos: function(str) {
+         /* If we have a mask, figure out the decDigits option. */
+         var decPos = str.indexOf(this.options.decSymbol);
+         
+         return decPos;
+      }, // endfunction
+
+     
       /****** 
        *  Move the cursor to the end of the text field.
        ******/
@@ -502,11 +520,14 @@
        *  decimal point for a numeric mask.
        ******/
       setCursorIntStart: function() {
-         var pos;
-
          if (this.isNumber()) {
-            pos = this.domNode.value.length - this.options.decDigits - 1;
+
+            /* Get the position of the decimal point. */
+            var pos = this._getDecPos(this.domNode.value);
+
+            /* Move the cursor. */
             this.setSelection(pos, pos);
+
          } // endif 
       }, // endfunction
       
@@ -516,11 +537,14 @@
        *  decimal point for a numeric mask.
        ******/
       setCursorDecStart: function() {
-         var pos;
-
          if (this.isNumber()) {
-            pos = this.domNode.value.length - this.options.decDigits;
-            this.setSelection(pos, pos);
+
+            /* Get the position of the decimal point. */
+            var pos = this._getDecPos(this.domNode.value);
+
+            /* Move the cursor. */
+            this.setSelection(pos + 1, pos + 1);
+
          } // endif 
       }, // endfunction
 
@@ -725,11 +749,7 @@
 
          /* If this is a number field, format it as a number and leave. */
          if (this.isNumber()) { 
-            var self = this;
-            setTimeout(function(){
-               self.formatNumber();
-            }, 1);
-            return;
+            return wearNumMask(str, mask);
          } // endif
 
 
@@ -846,16 +866,34 @@
        *  Format a number field based on the options set.
        ******/
       formatNumber: function() {
-         /* Record the currently selected text. */
+         var editDecimal, newPos;
          var range = new Range(this);
 
-         /* If this field has a number mask, then apply it. */
-         if (this.options.mask) {
-            this.domNode.value = wearNumMask(
-               this.domNode.value, this.options.mask);
+         /* Are we editing the decimal portion of the number? */
+         if (range[1] > this._getDecPos(this.domNode.value)) {
+            editDecimal = true;
+         } else {
+            editDecimal = false;
+         } // endif
 
-            /* Reset the selected text. */
-            this.setSelection(range);
+
+         /* If this field has a number mask, then apply it. */
+         console.log(range[0], range[1]);
+         if (this.options.mask) {
+
+            var nmask = wearNumMask(
+               this.domNode.value, this.options.mask);
+            console.log("nmask", nmask);
+            this.domNode.value = nmask;
+
+            /* Unselect any selected text. */
+            if (range[0] != range[1]) {
+               this.setSelection(range[1], range[1]);
+            } else { 
+               console.log('val', range.valueOf());
+               this.setSelection(range);
+            } // endif
+              
             return;
          } // endif
 
@@ -892,7 +930,8 @@
     
    function Range( obj ) {
       this.range = obj.getSelectionRange();
-      this.len   = obj.domNode.value.length
+      this.len = obj.domNode.value.length
+      console.log("nodeval='" + typeof(obj.domNode.value) + "'");
       this.obj   = obj;
 
       this['0']  = this.range[0];
@@ -902,6 +941,7 @@
    Range.prototype = {
       valueOf : function(){
          var len = this.len - this.obj.domNode.value.length;
+         console.log("valof", this.len, this.obj.domNode.value.length, this.range[0], this.range[1]);
          return [ this.range[0] - len, this.range[1] - len ];
       }, // endfunction
 
