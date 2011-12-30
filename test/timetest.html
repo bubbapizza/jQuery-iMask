@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+   <script type="text/javascript" src="../source/keylib.js"></script>
+   <script type="text/javascript" src="../source/nummask.js"></script>
+	<script type="text/javascript" src="../source/jquery.imask.js"></script>
+	<script type="text/javascript">
+	$(function(){
+
+		$('#inp1').iMask({
+			  type : 'fixed'
+         , mask : '99:99:99'
+		});
+
+		$('#inp2').iMask({
+			  type : 'fixed'
+			, mask : 'mm/dd/yy'
+		});
+
+		$('#inp3').iMask({
+			       type : 'number'
+              , mask : '>>,>>9.9999'
+			});
+
+		$('#inp4').iMask({
+		      type      : 'fixed'
+          , mask      : '[99.999.999-x]'
+		    , decDigits : 2
+		})
+	});
+	</script>
+
+	<style>
+	label {
+		min-width : 100px;
+		display   : inline-block;
+	}
+	input {
+		font-family : courier;
+	}
+	</style>
+
+</head>
+<body>
+   <div id="keys"></div>
+	<label>Time: </label><input id="inp1">
+	<br />
+	<label>Date: </label><input id="inp2">
+	<br />
+	<label>0-1000000: </label><input id="inp3">
+	<br />
+	<label>[99.999.999-x]: </label><input id="inp4">
+</body>
+</html>
