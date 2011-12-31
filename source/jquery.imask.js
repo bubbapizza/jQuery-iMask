@@ -99,12 +99,25 @@
        ***********/
       paste: function( ev ) {
          var range = new Range(this);
-         console.log("KKKKKKKKKKKKKKKKKK");
+         var oldValue = this.domNode.value;
 
          var self = this;
          setTimeout(function() {
             var pos = range.valueOf()[1]
-            self.formatNumber();
+
+            /* Truncate the pasted value before applying the mask. */
+            var cleanVal = stripAlpha(self.domNode.value);
+            cleanVal = cleanVal.slice(0, self.options.mask.length);
+            console.log("cleanVal=", cleanVal);
+            self.domNode.value = cleanVal;
+
+            /* Apply the mask and reposition the cursor. */
+            try {
+               self.formatNumber();
+            } catch(err) {
+               self.domNode.value = '0';
+               self.formatNumber();
+            } // endcatch
             self.setSelection(pos, pos);
          }, 1);
 

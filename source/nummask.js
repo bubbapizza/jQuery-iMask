@@ -8,18 +8,43 @@ DECIMAL_CHR = '.';
 GROUP_CHR = ',';
 
 /******
- *  Simple function to strip out all non-numeric info from a string and
- *  strip out any leading zeros. 
+ *  Simple function to strip out anything that doesn't belong in a 
+ *  number.  This includes all alphabetic characters, non-leading
+ *  negative signs, and multiple decimal points.
+ *  or minus sign.  This als
+ *  strip out any leading zeros.  
  ******/
 stripAlpha = function(str) {
    var output = '';
+   var allow_minus_sign = true;
+   var allow_decimal_point = true;
+   var allow_zeros = false;
 
    for (var i = 0; i < str.length; i += 1) {
-      if (keylib.isDigit(str[i]) 
-          || str[i] == '-'
-          || str[i] == DECIMAL_CHR) {
+
+      /* Allow a single leading minus sign. */
+      if (str[i] == '-' && allow_minus_sign) {
          output += str[i];
+         allow_minus_sign = false;
+
+      /* Allow a single decimal point. */
+      } else if (str[i] == DECIMAL_CHR && allow_decimal_point) {
+         output += str[i];
+         allow_decimal_point = false;
+
+      } else if (keylib.isDigit(str[i])) {
+
+         /* Check for a digit from 1-9. */
+         if (allow_zeros || str[i].match(/[1-9]/)) {
+            output += str[i];
+
+            /* Once we hit a non-zero digit, no minus signs allowed
+               but zeros are now allowed. */
+            allow_minus_sign = false;
+            allow_zeros = true;
+         } // endif
       } // endif
+
    } // endfor
 
    /* Strip off leading zeros. */
@@ -113,8 +138,10 @@ wearNumMask = function(numStr, mask) {
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it. */
             if (intStrPtr >= 0) {
-               output = intStr[intStrPtr] + output;
-               intStrPtr -= 1;
+               if (keylib.isDigit(intStr[intStrPtr])) {
+                  output = intStr[intStrPtr] + output;
+                  intStrPtr -= 1;
+               } // endif
 
             /* No more numbers, pad with a zero. */
             } else {
