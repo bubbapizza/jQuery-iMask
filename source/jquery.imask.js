@@ -56,11 +56,8 @@
          } // endif
 
          this.node
-            .bind( "mousedown click", function(ev) { 
-               ev.stopPropagation(); ev.preventDefault(); } )
-
-            .bind( "mouseup",  function() { 
-               self.onMouseUp .apply(self, arguments); } )
+            .bind( "paste",  function() { 
+               self.paste .apply(self, arguments); } )
 
             .bind( "keydown",  function() { 
                self.onKeyDown .apply(self, arguments); } )
@@ -98,19 +95,19 @@
 /**************** EVENTS ********************/
 
       /***********
-       * MOUSE UP
+       * PASTE
        ***********/
-      onMouseUp: function( ev ) {
+      paste: function( ev ) {
+         var range = new Range(this);
+         console.log("KKKKKKKKKKKKKKKKKK");
 
-         ev.stopPropagation();
-         ev.preventDefault();
+         var self = this;
+         setTimeout(function() {
+            var pos = range.valueOf()[1]
+            self.formatNumber();
+            self.setSelection(pos, pos);
+         }, 1);
 
-         if( this.isFixed() ) {
-            var p = this.getSelectionStart();
-            this.setSelection(p, (p + 1));
-         } else if(this.isNumber() ) {
-            this.setCursorEnd();
-         } // endif
       }, // endfunction
 
 
@@ -209,7 +206,6 @@
 
                   /* If the user tries to delete the decimal point, 
                      prevent the key from getting applied whatsoever. */
-                  console.log("DDDDD", pos, decPos);
                   if (pos == (decPos + 1) && chr == "backspace") {
                      ev.preventDefault();
                      ev.stopPropagation();
