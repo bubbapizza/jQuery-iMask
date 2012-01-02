@@ -216,21 +216,39 @@
 
                   var pos = range.valueOf()[1]
                   var decPos = this._getDecPos(this.domNode.value);
+                  var self = this;
+                  var delChr = chr;
 
-                  /* If the user tries to delete the decimal point, 
-                     prevent the key from getting applied whatsoever. */
+                  /* If the user tries to delete the decimal point
+                     using the backspace key, prevent the key from 
+                     getting applied whatsoever. */
                   if (pos == (decPos + 1) && chr == "backspace") {
                      ev.preventDefault();
                      ev.stopPropagation();
 
+                  /* If the user tried to delete the decimal point using
+                     the delete key, then delete the first digit after
+                     the decimal point. */
                   } else if ((pos == decPos) && chr == "delete") {
+                     this.domNode.value = 
+                        this.domNode.value.slice(0, decPos + 1) +
+                        this.domNode.value.slice(decPos + 2);
                      ev.preventDefault();
                      ev.stopPropagation();
                   } // endif
                   
-                  var self = this;
                   setTimeout(function(){
                      self.delFormatNumber();
+
+                     /* In the odd situation where the user tried to 
+                        delete the decimal point with the delete key,
+                        we have to reposition the cursor back to the
+                        the spot just left of the decimal.  If we don't
+                        do this, then it tends to wind up at the end. */
+                     if ((pos == decPos) && delChr == "delete") {
+                        self.setSelection(pos, pos);
+                     } // endif
+                        
                   }, 1);
 
 
@@ -525,6 +543,11 @@
       _getDecPos: function(str) {
          /* If we have a mask, figure out the decDigits option. */
          var decPos = str.indexOf(this.options.decSymbol);
+
+         /* No decimal point, the implied position is at the end. */
+         if (decPos < 0) {
+            decPos = str.length;
+         } // endif
          
          return decPos;
       }, // endfunction
