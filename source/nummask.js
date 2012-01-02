@@ -8,11 +8,10 @@ DECIMAL_CHR = '.';
 GROUP_CHR = ',';
 
 /******
- *  Simple function to strip out anything that doesn't belong in a 
+ *  Small function to strip out anything that doesn't belong in a 
  *  number.  This includes all alphabetic characters, non-leading
  *  negative signs, and multiple decimal points.
- *  or minus sign.  This als
- *  strip out any leading zeros.  
+ *  or minus sign.  This also  strips out any leading zeros.  
  ******/
 stripAlpha = function(str) {
    var output = '';
@@ -27,10 +26,12 @@ stripAlpha = function(str) {
          output += str[i];
          allow_minus_sign = false;
 
-      /* Allow a single decimal point. */
+      /* Allow a single decimal point.  Once we hit the decimal point,
+         we can also allow zeros. */
       } else if (str[i] == DECIMAL_CHR && allow_decimal_point) {
          output += str[i];
          allow_decimal_point = false;
+         allow_zeros = true;
 
       } else if (keylib.isDigit(str[i])) {
 
@@ -46,9 +47,6 @@ stripAlpha = function(str) {
       } // endif
 
    } // endfor
-
-   /* Strip off leading zeros. */
-   output = output.replace(/^0+/, '');
 
    return output;
 } // endfunction
@@ -113,6 +111,7 @@ wearNumMask = function(numStr, mask) {
     */
    intStrPtr = intStr.length - 1;
    for(maskPtr = intMask.length - 1; maskPtr >= 0;  maskPtr--) {
+
       
       /* Check the current mask character. */
       maskChr = intMask.charAt(maskPtr);
@@ -135,15 +134,22 @@ wearNumMask = function(numStr, mask) {
          /*** FORCED DIGIT ***/
          case '9':
 
-            /* Check to see if we have a number to fill in a number 
-               slot.  If so, use it. */
+            /* If we still have some characters in the integer portion
+               of the string, figure out what to put in this slot. */
             if (intStrPtr >= 0) {
-               if (keylib.isDigit(intStr[intStrPtr])) {
+
+               /* If we're at the minus sign, we've run out of 
+                  numbers so fill with a zero. */
+               if (intStr[intStrPtr] == '-') {
+                  output = '0' + output;
+
+               /* If we've got a digit, use it. */
+               } else if (keylib.isDigit(intStr[intStrPtr])) {
                   output = intStr[intStrPtr] + output;
                   intStrPtr -= 1;
                } // endif
 
-            /* No more numbers, pad with a zero. */
+            /* No more numbers, fill the slot with a zero. */
             } else {
                output = '0' + output;
             } // endif
@@ -185,7 +191,6 @@ wearNumMask = function(numStr, mask) {
    /*
     *  Check for number too large for mask!!!
     */
-   // console.log("intstrptr=", intStrPtr, numStr);
    if (intStrPtr >= 0) {
       throw "MASK SIZE EXCEEDED";
    } // endif
@@ -205,6 +210,9 @@ wearNumMask = function(numStr, mask) {
     *  portion of the mask.  One, by one we check the mask characters 
     *  against the string and figure out what to do.
     */
+
+   /* If the string doesn't have a decimal portion, we have to set the
+      pointer to a negative value so we don't index errors. */
    if (decStr.length == 0) {
       decStrPtr = -1;
    } else {
