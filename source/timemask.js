@@ -14,6 +14,10 @@ GROUP_CHR = ',';
 stripAlpha = function(str) {
    var output = '';
 
+   /* TODO:  If the number of digits is odd, then pad it with
+             a zero up front since the chances are the user entered
+             something like "1:05 or 315". */
+
    for (var i = 0; i < str.length; i += 1) {
 
       /* Only allow digits and colons. */
@@ -64,12 +68,13 @@ wearTimeMask = function(timeStr, mask) {
                   hrs_digits == 1;
 
                /* Military time */
-               } else if (hrs_digits == 1 && hours <= 2) {
+               } else if (   hrs_digits == 1 
+                          && hours <= 2 
+                          && int(timeStr[timePtr]) <= 3) {
                   hours = hours * 10 + int(timeStr[timePtr]);
                   output += timeStr[timePtr];
-                  timePtr += 1;
                   hrs_digits == 2;
-
+                  timePtr += 1;
                } // endif
             } // endif
          break;
@@ -82,19 +87,19 @@ wearTimeMask = function(timeStr, mask) {
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it. */
             if (timeStr[timePtr]) {
-               if (hrs_digits = 0) {
+               if (min_digits = 0) {
                   minutes = int(timeStr[timePtr]);
                   output += timeStr[timePtr];
                   timePtr += 1;
                   min_digits == 1;
 
-               /* Military time */
-               } else if (hrs_digits == 1 && hours <= 2) {
+               /* If we hit a 2nd digit, the other one has to be less
+                  than 5, otherwise it must be for the # of seconds. */
+               } else if (hrs_digits == 1 && minutes <= 5) {
                   minutes = minutes * 10 + int(timeStr[timePtr]);
                   output += timeStr[timePtr];
                   timePtr += 1;
                   min_digits == 2;
-
                } // endif
             } // endif
          break; 
