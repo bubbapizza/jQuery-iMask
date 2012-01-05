@@ -137,7 +137,7 @@ wearTimeMask = function(timeStr, mask) {
                   /* If the second digit is less than 24 then we can
                      use it for the 2nd digit of the hours slot. */
                   if (hours < 24) {
-                     output = timeStr[strPtr];
+                     output += timeStr[strPtr];
                      hrs_digits = 2;
                      strPtr += 1;
 
@@ -225,7 +225,8 @@ wearTimeMask = function(timeStr, mask) {
              */
             if (   timeStr[strPtr] == undefined
                 || timeStr[strPtr] == 'a'
-                || timeStr[strPtr] == 'p') {
+                || timeStr[strPtr] == 'p'
+                || timeStr[strPtr] == ':') {
                if (sec_digits == 0) {
                   output += '00';
                   sec_digits = 2;
