@@ -113,10 +113,13 @@ wearTimeMask = function(timeStr, mask) {
                if (hrs_digits == 0) {
                   hours = parseInt(timeStr[strPtr]);
 
-                  /* If the first digit is > 2 AND its military time,
+                  /* For military time, the first digit can be max
+                     of 2 and for normal time, the first digit can be
+                     max of 1.  If the current digit exceeds those
                      then there's no way we have any more valid hours 
                      digits coming after that. */ 
-                  if (hours > 2) { 
+                  if (   (hours > 2 && military_time)
+                      || (hours > 1 && normal_time)) { 
                      output += '0' + timeStr[strPtr];
                      hrs_digits = 2;
                      strPtr += 1;
@@ -134,14 +137,16 @@ wearTimeMask = function(timeStr, mask) {
                } else if (hrs_digits == 1) { 
                   hours = hours * 10 + parseInt(timeStr[strPtr]);
 
-                  /* If the second digit is less than 24 then we can
-                     use it for the 2nd digit of the hours slot. */
-                  if (hours < 24) {
+                  /* Check to make sure the 2nd digit produces a valid
+                     number of hours.  If so then use it for the 2nd 
+                     digit of the hours slot. */
+                  if (   (hours < 24 && military_time)
+                      || (hours < 13 && normal_time)) {
                      output += timeStr[strPtr];
                      hrs_digits = 2;
                      strPtr += 1;
 
-                  /* We don't have a 2nd digit, so the hours slots 
+                  /* We don't have a valid 2nd digit, so the hours slots 
                      are now all filled up. */
                   } else {
                      output = '0' + output;
