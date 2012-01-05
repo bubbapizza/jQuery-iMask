@@ -294,6 +294,58 @@
                   this.node.trigger("invalid", ev, this.node);
                } // endif 
 
+
+
+            /****** TIME MASK ******/
+            } else if (this.isTime()) {
+
+               /* 
+                *  See which key was pressed. 
+                */
+
+               /* For cursor movement keys, we don't do anything, 
+                  just let the browser do it's thing. */
+               if (   chr == "end"
+                   || chr == "home"
+                   || chr == "left-arrow"
+                   || chr == "up-arrow" 
+                   || chr == "right-arrow"
+                   || chr == "down-arrow") {
+                  null;
+                     
+
+               /* For backspace & delete, let the browser do its
+                  thing, then 1 millisecond later, format the 
+                  number. */
+               } else if (
+                     chr == "backspace"
+                  || chr == "delete") {
+
+                  var self = this;
+
+                  setTimeout(function(){
+                     self.formatTime();
+                  }, 1);
+
+
+               /* Check for digits. */
+               } else if (keylib.isDigit(chr)) {
+
+                  /* If the key passes the sanity test then apply it. */
+                  var val = this.sanityTest(range.replaceWith(chr));
+                  if(val !== false) {
+                     this.updateSelection(chr);
+                     this.formatTime();
+                  } // endif
+                  this.node.trigger("valid", ev, this.node);
+
+
+               /* BAD KEY PRESSED */
+               } else {
+                  /* Cancel the event but allow further propagation. */
+                  ev.preventDefault();
+                  this.node.trigger("invalid", ev, this.node);
+               } // endif 
             } // endif 
          } // endif 
       }, // endfunction
@@ -359,6 +411,8 @@
                      self.selectFirst();
                   } else if (self.isNumber()) {
                      self.setCursorIntStart();
+                  } else if (self.isTime()) {
+                     self.setCursorStart();
                   } // endif
                } //endfuction
                , 1 
@@ -553,6 +607,14 @@
       setCursorEnd: function() {
          var len = this.domNode.value.length;
          this.setSelection(len, len);
+      }, // endfunction
+
+
+      /****** 
+       *  Move the cursor to the end of the text field.
+       ******/
+      setCursorStart: function() {
+         this.setSelection(0, 0);
       }, // endfunction
 
 
@@ -793,6 +855,11 @@
             return nummask.wearMask(str, mask);
          } // endif
 
+         /* If this is a time field, format it as a time and leave. */
+         if (this.isTime()) { 
+            return timemask.wearMask(str, mask);
+         } // endif
+
 
             
          var output = ""
@@ -976,6 +1043,32 @@
             } else {
                this.setSelection(pos - 1, pos - 1);
             } // endif
+              
+            return;
+         } // endif
+
+      }, // endfunction
+
+
+      /******
+       *  Format a time field.
+       ******/
+      formatTime: function() {
+         var range = new Range(this);
+         console.log('range', range);
+
+         if (this.options.mask) {
+
+            var tmask = timemask.wearMask(
+               this.domNode.value, this.options.mask);
+            this.domNode.value = tmask;
+
+            /* Since the input value make have shrunk in size, we
+               have to get the new selection range.  The cursor will
+               be positioned at the end of the selection range. */
+            var pos = range.valueOf()[1]
+            console.log('r2', range[0], range[1], range.valueOf());
+            this.setSelection(pos + 1, pos + 1);
               
             return;
          } // endif
