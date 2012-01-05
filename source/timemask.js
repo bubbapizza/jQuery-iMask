@@ -59,12 +59,11 @@ wearTimeMask = function(timeStr, mask) {
    var min_digits = 0;
    var sec_digits = 0;
 
-   mask = mask.toLowerCase()
 
    /* Figure out what the time format is and return if we get a 
       bogus mask. */
-   var military_time = (mask[0] == 'h');
    var normal_time = (mask[0] == '>');
+   var military_time = !normal_time;
    if (military_time == false && normal_time == false) {
       return "00:00:00";
    } // endif
@@ -78,13 +77,13 @@ wearTimeMask = function(timeStr, mask) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
-      print (maskChr, timeStr[strPtr]);
-      print ("output='" + output + "'");
+      print (maskChr, timeStr[strPtr], "output='" + output + "'");
       switch(maskChr) {
 
          /*** HOURS ***/
          case 'h':
          case 'H':
+         case '>':
 
             /*
              *  If we ran out of timeStr characters, or we hit the
@@ -100,7 +99,7 @@ wearTimeMask = function(timeStr, mask) {
                   output = '00';
                   hrs_digits = 2;
                } else if (hrs_digits == 1) {
-                  output = '0' + output;
+                  output = '0' + output; 
                   hrs_digits = 2;
                } // endif
 
@@ -118,7 +117,7 @@ wearTimeMask = function(timeStr, mask) {
                      then there's no way we have any more valid hours 
                      digits coming after that. */ 
                   if (hours > 2) { 
-                     output = '0' + timeStr[strPtr];
+                     output += '0' + timeStr[strPtr];
                      hrs_digits = 2;
                      strPtr += 1;
 
@@ -138,7 +137,7 @@ wearTimeMask = function(timeStr, mask) {
                   /* If the second digit is less than 24 then we can
                      use it for the 2nd digit of the hours slot. */
                   if (hours < 24) {
-                     output += timeStr[strPtr];
+                     output = timeStr[strPtr];
                      hrs_digits = 2;
                      strPtr += 1;
 
@@ -177,7 +176,7 @@ wearTimeMask = function(timeStr, mask) {
                } // endif
 
             /*
-             *  Otherwise, we must have a digit so see where it
+             *  Otherwise, if we have a digit then see where it
              *  fits in the minutes digit slots.
              */
             } else if (keylib.isDigit(timeStr[strPtr])) {
@@ -215,6 +214,65 @@ wearTimeMask = function(timeStr, mask) {
          break; 
                   
 
+         /*** SECONDS ***/
+         case 's':
+         case 'S':
+                 
+            /*
+             *  If we ran out of timeStr characters, or we hit the
+             *  am/pm indicator, then we're done with entering seconds.  
+             *  Just put zeros in the remaining slots.
+             */
+            if (   timeStr[strPtr] == undefined
+                || timeStr[strPtr] == 'a'
+                || timeStr[strPtr] == 'p') {
+               if (sec_digits == 0) {
+                  output += '00';
+                  sec_digits = 2;
+               } else if (sec_digits == 1) {
+                  output += '0';
+                  sec_digits = 2;
+               } // endif
+
+            /*
+             *  Otherwise, if we have a digit then see where it
+             *  fits in the seconds digit slots.
+             */
+            } else if (keylib.isDigit(timeStr[strPtr])) {
+
+               /** FIRST DIGIT **/
+               if (sec_digits == 0) {
+                  seconds = parseInt(timeStr[strPtr]);
+
+                  /* If the first seconds digit is > 5 then it MUST
+                     go in the slot for the 2nd digit and there's no 
+                     way we have any more valid seconds digits coming
+                     after that. */
+                  if (seconds > 5) {
+                     output += '0' + timeStr[strPtr];
+                     sec_digits = 2;
+                     strPtr += 1;
+
+                  /* We may or may not have a 2nd digit so keep on
+                     going. */
+                  } else {
+                     output += timeStr[strPtr];
+                     sec_digits = 1;
+                     strPtr += 1;
+                  } // endif
+                     
+
+               /** 2ND DIGIT **/
+               } else if (sec_digits == 1) { 
+                  output += timeStr[strPtr];
+                  sec_digits = 2;
+                  strPtr += 1;
+               } // endif
+            } // endif 
+
+         break; 
+
+
          /*** SEPARATOR ***/
          case ':':
 
@@ -233,7 +291,7 @@ wearTimeMask = function(timeStr, mask) {
 
          /*** OTHER CHARACTERS ***/
          default:
-            intStrPtr += 1;
+            null;
          break;
       } // endswitch
    } //endfor
