@@ -23,7 +23,7 @@ stripAlpha = function(str) {
          matters. */
       } else if (str[i].toLowerCase() == 'a' ||
                  str[i].toLowerCase() == 'p') {
-         output += str[i];
+         output += str[i].toLowerCase();
          found_ampm = true;
       } // endif
    } // endfor
