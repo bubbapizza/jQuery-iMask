@@ -55,9 +55,9 @@ wearTimeMask = function(timeStr, mask) {
    var minutes = 0;
    var seconds = 0;
    var output = '';
-   var hrs_digit = 0;
-   var min_digit = 0;
-   var sec_digit = 0;
+   var hrs_digits = 0;
+   var min_digits = 0;
+   var sec_digits = 0;
 
    mask = mask.toLowerCase()
 
@@ -65,7 +65,7 @@ wearTimeMask = function(timeStr, mask) {
       bogus mask. */
    var military_time = (mask[0] == 'h');
    var normal_time = (mask[0] == '>');
-   if (military_time == false and normal_time == false) {
+   if (military_time == false && normal_time == false) {
       return "00:00:00";
    } // endif
 
@@ -78,9 +78,8 @@ wearTimeMask = function(timeStr, mask) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
-      print (maskChr, strPtr);
+      print (maskChr, timeStr[strPtr]);
       print ("output='" + output + "'");
-      digit = 1;
       switch(maskChr) {
 
          /*** HOURS ***/
@@ -95,20 +94,21 @@ wearTimeMask = function(timeStr, mask) {
                   /** FIRST DIGIT **/
                   if (hrs_digits == 0) {
                      hours = parseInt(timeStr[strPtr]);
+                     print("hello hours =", hours);
 
                      /* If the first digit is > 2 AND its military time,
                         then there's no way we have any more valid hours 
                         digits coming after that. */ 
                      if (hours > 2) { 
                         output = '0' + timeStr[strPtr];
-                        hrs_digits == 2;
+                        hrs_digits = 2;
                         strPtr += 1;
 
                      /* We may or may not have a 2nd digit so keep 
                         going. */
                      } else {
                         output += timeStr[strPtr];
-                        hrs_digits == 1;
+                        hrs_digits = 1;
                         strPtr += 1;
                      } // endif
    
@@ -127,10 +127,21 @@ wearTimeMask = function(timeStr, mask) {
                      /* We don't have a 2nd digit, so the hours slots 
                         are now all filled up. */
                      } else {
+                        output = '0' + output;
                         hrs_digits = 2;
                      } // endif
                   } // endif
+               } // endif
 
+            /* We ran out of characters so just fill in zeros. */
+            } else {
+               if (hrs_digits == 0) {
+                  output = '00';
+                  hrs_digits = 2;
+               } else if (hrs_digits == 1) {
+                  output = '0' + output;
+                  hrs_digits = 2;
+               } // endif
             } // endif
          break;
 
