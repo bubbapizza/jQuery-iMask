@@ -28,6 +28,7 @@ stripAlpha = function(str) {
       } // endif
    } // endfor
 
+
     
    return output;
 } // endfunction
@@ -58,6 +59,7 @@ wearTimeMask = function(timeStr, mask) {
    var hrs_digits = 0;
    var min_digits = 0;
    var sec_digits = 0;
+   var am_flag = true;
 
 
    /* Figure out what the time format is and return if we get a 
@@ -77,7 +79,6 @@ wearTimeMask = function(timeStr, mask) {
       
       /* Check the current mask character. */
       maskChr = mask.charAt(maskPtr);
-      print (maskChr, timeStr[strPtr], "output='" + output + "'");
       switch(maskChr) {
 
          /*** HOURS ***/
@@ -96,8 +97,13 @@ wearTimeMask = function(timeStr, mask) {
                 || timeStr[strPtr] == 'p'
                 || timeStr[strPtr] == ':') {
                if (hrs_digits == 0) {
-                  output = '00';
+                  if (military_time) {
+                     output = '00';
+                  } else {
+                     output = '12';
+                  } // endif
                   hrs_digits = 2;
+
                } else if (hrs_digits == 1) {
                   output = '0' + output; 
                   hrs_digits = 2;
@@ -301,6 +307,20 @@ wearTimeMask = function(timeStr, mask) {
          break;
       } // endswitch
    } //endfor
+
+
+
+   /*** AM/PM FLAG ***/
+   if (normal_time) {
+      for ( ; timeStr[strPtr] ;  strPtr += 1) {
+         if (timeStr[strPtr] == 'p') {
+            am_flag = false;
+         } // endif
+      } // endfor
+ 
+      output += am_flag ? " AM" : " PM";
+   } // endif 
+
 
    return output;
 
