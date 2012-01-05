@@ -15,9 +15,6 @@
     * @param {String}   [options.validNumbers='1234567890']
     * @param {String}   [options.validAlphas='abcdefghijklmnopqrstuvwxyz']
     * @param {String}   [options.validAlphaNums='abcdefghijklmnopqrstuvwxyz1234567890']
-    * @param {String}   [options.currencySymbol]
-    * @param {String}   [options.groupSymbol=',']
-    * @param {String}   [options.decSymbol='.']
     * @param {Boolean}  [options.showMask=true]
     * @param {Boolean}  [options.stripMask=false]
     * @param {Function} [options.sanity]
@@ -35,9 +32,6 @@
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ",
          validAlphaNums : 
             "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
-         currencySymbol : '',
-         groupSymbol    : ',',
-         decSymbol      : '.',
          showMask       : true,
          stripMask      : false,
 
@@ -542,7 +536,7 @@
        ******/
       _getDecPos: function(str) {
          /* If we have a mask, figure out the decDigits option. */
-         var decPos = str.indexOf(this.options.decSymbol);
+         var decPos = str.indexOf(nummask.DECIMAL_CHR);
 
          /* No decimal point, the implied position is at the end. */
          if (decPos < 0) {
@@ -796,7 +790,7 @@
 
          /* If this is a number field, format it as a number and leave. */
          if (this.isNumber()) { 
-            return wearNumMask(str, mask);
+            return nummask.wearMask(str, mask);
          } // endif
 
 
@@ -929,9 +923,8 @@
          console.log("decimal?", editDecimal);
          if (this.options.mask) {
 
-            var nmask = wearNumMask(
+            var nmask = nummask.wearMask(
                this.domNode.value, this.options.mask);
-            console.log("nmask", nmask);
             this.domNode.value = nmask;
 
             /* Since the input value make have shrunk in size, we
@@ -970,7 +963,7 @@
          /* If this field has a number mask, then apply it. */
          if (this.options.mask) {
 
-            var nmask = wearNumMask(
+            var nmask = nummask.wearMask(
                this.domNode.value, this.options.mask);
             this.domNode.value = nmask;
 
