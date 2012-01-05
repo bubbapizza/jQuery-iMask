@@ -94,7 +94,6 @@ wearTimeMask = function(timeStr, mask) {
                   /** FIRST DIGIT **/
                   if (hrs_digits == 0) {
                      hours = parseInt(timeStr[strPtr]);
-                     print("hello hours =", hours);
 
                      /* If the first digit is > 2 AND its military time,
                         then there's no way we have any more valid hours 
@@ -153,20 +152,47 @@ wearTimeMask = function(timeStr, mask) {
             /* Check to see if we have a number to fill in a number 
                slot.  If so, use it. */
             if (timeStr[strPtr]) {
-               if (min_digits == 0) {
-                  minutes = parseInt(timeStr[strPtr]);
-                  output += timeStr[strPtr];
-                  min_digits = 1;
+               if (keylib.isDigit(timeStr[strPtr])) {
 
-               /* If we hit a 2nd digit, the other one has to be less
-                  than 5, otherwise it must be for the # of seconds. */
-               } else if (hrs_digits == 1 && minutes <= 5) {
-                  minutes = minutes * 10 + parseInt(timeStr[strPtr]);
-                  output += timeStr[strPtr];
+                  /** FIRST DIGIT **/
+                  if (min_digits == 0) {
+                     minutes = parseInt(timeStr[strPtr]);
+
+                     /* If the first minutes digit is > 5 then it MUST
+                        go in the slot for the 2nd digit and there's no 
+                        way we have any more valid minutes digits coming
+                        after that. */
+                     if (minutes > 5) {
+                        output += '0' + timeStr[strPtr];
+                        min_digits = 2;
+                        strPtr += 1;
+
+                     /* We may or may not have a 2nd digit so keep on
+                        going. */
+                     } else {
+                        output += timeStr[strPtr];
+                        min_digits = 1;
+                        strPtr += 1;
+                     } // endif
+                        
+
+                  /** 2ND DIGIT **/
+                  } else if (min_digits == 1) { 
+                     output += timeStr[strPtr];
+                     min_digits = 2;
+                     strPtr += 1;
+                  } // endif
+               } // endif 
+
+            /* We ran out of characters so just fill in zeros. */
+            } else {
+               if (min_digits == 0) {
+                  output += '00';
+                  min_digits = 2;
+               } else if (min_digits == 1) {
+                  output += '0';
                   min_digits = 2;
                } // endif
-
-               strPtr += 1;
             } // endif
          break; 
                   
