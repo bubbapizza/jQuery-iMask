@@ -86,54 +86,16 @@ wearTimeMask = function(timeStr, mask) {
          case 'h':
          case 'H':
 
-            /* Check to see if we have a number to fill in an 'h'
-               slot.  If so, use it. */
-            if (timeStr[strPtr]) {
-               if (keylib.isDigit(timeStr[strPtr])) {
-
-                  /** FIRST DIGIT **/
-                  if (hrs_digits == 0) {
-                     hours = parseInt(timeStr[strPtr]);
-
-                     /* If the first digit is > 2 AND its military time,
-                        then there's no way we have any more valid hours 
-                        digits coming after that. */ 
-                     if (hours > 2) { 
-                        output = '0' + timeStr[strPtr];
-                        hrs_digits = 2;
-                        strPtr += 1;
-
-                     /* We may or may not have a 2nd digit so keep 
-                        going. */
-                     } else {
-                        output += timeStr[strPtr];
-                        hrs_digits = 1;
-                        strPtr += 1;
-                     } // endif
-   
-
-                  /** 2ND DIGIT **/
-                  } else if (hrs_digits == 1) { 
-                     hours = hours * 10 + parseInt(timeStr[strPtr]);
-
-                     /* If the second digit is less than 24 then we can
-                        use it for the 2nd digit of the hours slot. */
-                     if (hours < 24) {
-                        output += timeStr[strPtr];
-                        hrs_digits = 2;
-                        strPtr += 1;
-
-                     /* We don't have a 2nd digit, so the hours slots 
-                        are now all filled up. */
-                     } else {
-                        output = '0' + output;
-                        hrs_digits = 2;
-                     } // endif
-                  } // endif
-               } // endif
-
-            /* We ran out of characters so just fill in zeros. */
-            } else {
+            /*
+             *  If we ran out of timeStr characters, or we hit the
+             *  am/pm indicator, or we hit the ':' character, then
+             *  we're done with entering hours.  Just put zeros in 
+             *  the remaining slots.
+             */
+            if (   timeStr[strPtr] == undefined
+                || timeStr[strPtr] == 'a'
+                || timeStr[strPtr] == 'p'
+                || timeStr[strPtr] == ':') {
                if (hrs_digits == 0) {
                   output = '00';
                   hrs_digits = 2;
@@ -141,7 +103,54 @@ wearTimeMask = function(timeStr, mask) {
                   output = '0' + output;
                   hrs_digits = 2;
                } // endif
+
+            /*
+             *  Otherwise, we must have a digit so see where it
+             *  fits in the hours digit slots.
+             */
+            } else if (keylib.isDigit(timeStr[strPtr])) {
+
+               /** FIRST DIGIT **/
+               if (hrs_digits == 0) {
+                  hours = parseInt(timeStr[strPtr]);
+
+                  /* If the first digit is > 2 AND its military time,
+                     then there's no way we have any more valid hours 
+                     digits coming after that. */ 
+                  if (hours > 2) { 
+                     output = '0' + timeStr[strPtr];
+                     hrs_digits = 2;
+                     strPtr += 1;
+
+                  /* We may or may not have a 2nd digit so keep 
+                     going. */
+                  } else {
+                     output += timeStr[strPtr];
+                     hrs_digits = 1;
+                     strPtr += 1;
+                  } // endif
+
+
+               /** 2ND DIGIT **/
+               } else if (hrs_digits == 1) { 
+                  hours = hours * 10 + parseInt(timeStr[strPtr]);
+
+                  /* If the second digit is less than 24 then we can
+                     use it for the 2nd digit of the hours slot. */
+                  if (hours < 24) {
+                     output += timeStr[strPtr];
+                     hrs_digits = 2;
+                     strPtr += 1;
+
+                  /* We don't have a 2nd digit, so the hours slots 
+                     are now all filled up. */
+                  } else {
+                     output = '0' + output;
+                     hrs_digits = 2;
+                  } // endif
+               } // endif
             } // endif
+
          break;
 
          
@@ -149,43 +158,16 @@ wearTimeMask = function(timeStr, mask) {
          case 'm':
          case 'M':
                  
-            /* Check to see if we have a number to fill in a number 
-               slot.  If so, use it. */
-            if (timeStr[strPtr]) {
-               if (keylib.isDigit(timeStr[strPtr])) {
-
-                  /** FIRST DIGIT **/
-                  if (min_digits == 0) {
-                     minutes = parseInt(timeStr[strPtr]);
-
-                     /* If the first minutes digit is > 5 then it MUST
-                        go in the slot for the 2nd digit and there's no 
-                        way we have any more valid minutes digits coming
-                        after that. */
-                     if (minutes > 5) {
-                        output += '0' + timeStr[strPtr];
-                        min_digits = 2;
-                        strPtr += 1;
-
-                     /* We may or may not have a 2nd digit so keep on
-                        going. */
-                     } else {
-                        output += timeStr[strPtr];
-                        min_digits = 1;
-                        strPtr += 1;
-                     } // endif
-                        
-
-                  /** 2ND DIGIT **/
-                  } else if (min_digits == 1) { 
-                     output += timeStr[strPtr];
-                     min_digits = 2;
-                     strPtr += 1;
-                  } // endif
-               } // endif 
-
-            /* We ran out of characters so just fill in zeros. */
-            } else {
+            /*
+             *  If we ran out of timeStr characters, or we hit the
+             *  am/pm indicator, or we hit the ':' character, then
+             *  we're done with entering minutes.  Just put zeros in 
+             *  the remaining slots.
+             */
+            if (   timeStr[strPtr] == undefined
+                || timeStr[strPtr] == 'a'
+                || timeStr[strPtr] == 'p'
+                || timeStr[strPtr] == ':') {
                if (min_digits == 0) {
                   output += '00';
                   min_digits = 2;
@@ -193,7 +175,43 @@ wearTimeMask = function(timeStr, mask) {
                   output += '0';
                   min_digits = 2;
                } // endif
-            } // endif
+
+            /*
+             *  Otherwise, we must have a digit so see where it
+             *  fits in the minutes digit slots.
+             */
+            } else if (keylib.isDigit(timeStr[strPtr])) {
+
+               /** FIRST DIGIT **/
+               if (min_digits == 0) {
+                  minutes = parseInt(timeStr[strPtr]);
+
+                  /* If the first minutes digit is > 5 then it MUST
+                     go in the slot for the 2nd digit and there's no 
+                     way we have any more valid minutes digits coming
+                     after that. */
+                  if (minutes > 5) {
+                     output += '0' + timeStr[strPtr];
+                     min_digits = 2;
+                     strPtr += 1;
+
+                  /* We may or may not have a 2nd digit so keep on
+                     going. */
+                  } else {
+                     output += timeStr[strPtr];
+                     min_digits = 1;
+                     strPtr += 1;
+                  } // endif
+                     
+
+               /** 2ND DIGIT **/
+               } else if (min_digits == 1) { 
+                  output += timeStr[strPtr];
+                  min_digits = 2;
+                  strPtr += 1;
+               } // endif
+            } // endif 
+
          break; 
                   
 
