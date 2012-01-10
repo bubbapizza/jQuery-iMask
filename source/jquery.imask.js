@@ -298,6 +298,7 @@
 
             /****** TIME MASK ******/
             } else if (this.isTime()) {
+               var pos = range.valueOf()[1];
 
                /* 
                 *  See which key was pressed. 
@@ -316,7 +317,7 @@
 
                /* For backspace & delete, let the browser do its
                   thing, then 1 millisecond later, format the 
-                  number. */
+                  time. */
                } else if (
                      chr == "backspace"
                   || chr == "delete") {
@@ -329,14 +330,15 @@
 
 
                /* Check for digits. */
-               } else if (keylib.isDigit(chr)) {
+               } else if (keylib.isDigit(chr) || chr == ':') {
 
                   /* If the key passes the sanity test then apply it. */
-                  var val = this.sanityTest(range.replaceWith(chr));
-                  if(val !== false) {
-                     this.updateSelection(chr);
-                     this.formatTime();
-                  } // endif
+                  this.updateSelection(chr);
+                  var newPos = this.setTimeCursor(pos, chr);
+                  this.formatTime();
+                  console.log("newPos =", newPos);
+                  this.setSelection(newPos, newPos);
+
                   this.node.trigger("valid", ev, this.node);
 
 
@@ -651,6 +653,92 @@
          } // endif 
       }, // endfunction
 
+
+      /****** 
+       *  This function returns an integer indicating where to move 
+       *  the cursor to for time masks.  To do this, we need to know 
+       *  the current cursor position and which key the user pressed.
+       ******/
+      setTimeCursor: function(pos, chr) {
+         var digit = parseInt(chr);
+         var newPos = -1;
+
+         /* 
+          *  I know this is quite ugly and brute force but this was
+          *  the easiest way to handle cursor positioning for time
+          *  masks because it requires such exact and weird positioning.
+          */
+         console.log("TC pos=", pos, chr, digit);
+         if (pos == 0) {
+            if (digit > 2 || chr == ':') {
+               newPos = 3;
+            } else if (digit >= 0 && digit <= 2) {
+               newPos = 1;
+            } else if (chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 1) { 
+            if (digit >= 0 || chr == ':') {
+               newPos = 3;
+            } else if (chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+            
+         } else if (pos == 2) { 
+            if (chr == ':') {
+               newPos = 3;
+            } else if (digit >= 0 && digit <= 5) {
+               newPos = 4;
+            } else if (digit > 5) {
+               newPos = 6;
+            } else if (chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 3) { 
+            if (digit >= 0 && digit <= 5) {
+               newPos = 4;
+            } else if (digit > 5 || chr == ':') {
+               newPos = 6;
+            } else if (chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 4) { 
+            if (digit >= 0 || chr == ':') {
+               newPos = 6;
+            } else if (chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 5) { 
+            if (chr == ':') {
+               newPos = 6;
+            } else if (digit >= 0 && digit <= 5) {
+               newPos = 7;
+            } else if (digit > 5 || chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 6) { 
+            if (digit >= 0 && digit <= 5) {
+               newPos = 7;
+            } else if (digit > 5 || chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 7) { 
+            if (digit >= 0 || chr == 'a' || chr == 'p') {
+               newPos = 9;
+            } // endif
+
+         } else if (pos == 8 || pos == 9) {
+            newPos = 9;
+         } // endif
+
+         return newPos;
+      }, // endfunction
 
 
 
