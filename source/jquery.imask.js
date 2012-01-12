@@ -45,7 +45,8 @@
          var self     = this;
 
     
-         if (this.isNumber()) {
+         if (   this.isNumber() 
+             || (this.timeType() == timemask.NORMAL_TIME)) {
             this.node.css("text-align", "right");
          } // endif
 
@@ -70,6 +71,16 @@
       isFixed  : function(){ return this.options.type == 'fixed';  },
       isNumber : function(){ return this.options.type == 'number'; },
       isTime   : function(){ return this.options.type == 'time'; },
+
+      timeType : function() {
+         if (!this.isTime()) {
+            return undefined;
+         } else if (this.options.mask[0] == '>') {
+            return timemask.NORMAL_TIME;
+         } else {
+            return timemask.MILITARY_TIME;
+         } // endif 
+      }, // endfunction
 
 
       allowKeys : {
@@ -346,7 +357,11 @@
 
 
                /* Check for digits. */
-               } else if (keylib.isDigit(chr)) {
+               } else if (   keylib.isDigit(chr)
+                          || chr == 'a' 
+                          || chr == 'A'
+                          || chr == 'p' 
+                          || chr == 'P') {
 
                   /* Replace the current cursor selection with 
                      the digit character, then figure out the new
@@ -701,7 +716,6 @@
           *  the easiest way to handle cursor positioning for time
           *  masks because it requires such exact and weird positioning.
           */
-         console.log("TC pos=", pos, chr, digit);
          if (pos == 0) {
             if (digit > 2 || chr == ':') {
                newPos = 3;
@@ -776,7 +790,7 @@
                newPos = 9;
             } // endif
 
-         } else if (pos == 8 || pos == 9) {
+         } else if (pos >= 8) {
             newPos = 9;
          } // endif
 
@@ -1187,6 +1201,7 @@
       formatTime: function() {
          if (this.options.mask) {
 
+            console.log("formattime", this.domNode.value, this.options.mask);
             this.domNode.value = timemask.wearMask(
                this.domNode.value, this.options.mask);
 

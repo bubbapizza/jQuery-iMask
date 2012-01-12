@@ -5,20 +5,28 @@
 
 timemask = {
 
+   MILITARY_TIME : 'military',
+   NORMAL_TIME : 'normal', 
+
    /******
     *  Small function to strip out anything that doesn't belong in a 
     *  time string.  This means all non-digit characters except 
-    *  'a', 'A', 'p' or 'P'. 
+    *  'a', 'A', 'p' or 'P'.
     ******/
-   stripMask : function(str) {
+   _stripMask : function(str) {
       var output = '';
+      var first_colon = false;
       var found_ampm = false;
    
       for (var i = 0; i < str.length && found_ampm == false; i += 1) {
    
-         /* Only allow digits and colons. */
-         if (keylib.isDigit(str[i])) {
+         /* Only allow digits and the first colon. */
+         if (keylib.isDigit(str[i]) 
+             || (!first_colon && str[i] == ':')) {
             output += str[i];
+            if (str[i] == ':') {
+               first_colon = true;
+            } // endif
    
          /* If we found an 'a' or 'p', we've hit the end, nothing else
             matters. */
@@ -28,9 +36,33 @@ timemask = {
             found_ampm = true;
          } // endif
       } // endfor
+
+      /* For normal time strings, strip off leading zeros.  For
+         military time, strip out colons. */
+      if (found_ampm) {
+         output = output.replace(/^0+/, '');
+      } else {
+         output = output.replace(/:/, '');
+      } // endif
        
       return output;
    }, // endfunction
+
+
+
+   /******
+    *  Small function that returns whether or not a string is 
+    *  military or normal time. 
+    ******/
+   timeType : function(str) {
+      var stripped = this._stripMask(str);
+
+      if (stripped.indexOf('a') > 0 || stripped.indexOf('p') > 0) {
+         return this.NORMAL_TIME;
+      } else {
+         return this.MILITARY_TIME;
+      } // endif
+   }, // endfunction 
          
    
    
@@ -71,7 +103,8 @@ timemask = {
    
    
       /* Strip out bad characters from the time string. */
-      timeStr = this.stripMask(timeStr);
+      timeStr = this._stripMask(timeStr);
+     
    
       strPtr = 0;
       for(maskPtr = 0; maskPtr < mask.length;  maskPtr += 1) {
@@ -99,12 +132,16 @@ timemask = {
                      if (military_time) {
                         output = '00';
                      } else {
-                        output = '12';
+                        output = '0';
                      } // endif
                      hrs_digits = 2;
    
                   } else if (hrs_digits == 1) {
-                     output = '0' + output; 
+                     if (normal_time) {
+                        output = '' + output;
+                     } else {
+                        output = '0' + output; 
+                     } // endif
                      hrs_digits = 2;
                   } // endif
    
@@ -125,7 +162,11 @@ timemask = {
                         digits coming after that. */ 
                      if (   (hours > 2 && military_time)
                          || (hours > 1 && normal_time)) { 
-                        output += '0' + timeStr[strPtr];
+                        if (normal_time) {
+                           output += '' + timeStr[strPtr];
+                        } else { 
+                           output += '0' + timeStr[strPtr];
+                        } // endif
                         hrs_digits = 2;
                         strPtr += 1;
    
