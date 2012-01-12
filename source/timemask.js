@@ -123,6 +123,7 @@ timemask = {
                         max of 1.  If the current digit exceeds those
                         then there's no way we have any more valid hours 
                         digits coming after that. */ 
+                     print(hours, military_time, normal_time);
                      if (   (hours > 2 && military_time)
                          || (hours > 1 && normal_time)) { 
                         output += '0' + timeStr[strPtr];
@@ -154,7 +155,7 @@ timemask = {
                      /* We don't have a valid 2nd digit, so the hours slots 
                         are now all filled up. */
                      } else {
-                        output = '0' + output;
+                        output += '0';
                         hrs_digits = 2;
                      } // endif
                   } // endif
