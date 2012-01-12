@@ -7,7 +7,7 @@ timemask = {
 
    /******
     *  Small function to strip out anything that doesn't belong in a 
-    *  time string.  This means all non-digit characters except ':' and
+    *  time string.  This means all non-digit characters except 
     *  'a', 'A', 'p' or 'P'. 
     ******/
    stripMask : function(str) {
@@ -17,7 +17,7 @@ timemask = {
       for (var i = 0; i < str.length && found_ampm == false; i += 1) {
    
          /* Only allow digits and colons. */
-         if (keylib.isDigit(str[i]) || str[i] == ':') {
+         if (keylib.isDigit(str[i])) {
             output += str[i];
    
          /* If we found an 'a' or 'p', we've hit the end, nothing else
@@ -123,7 +123,6 @@ timemask = {
                         max of 1.  If the current digit exceeds those
                         then there's no way we have any more valid hours 
                         digits coming after that. */ 
-                     print(hours, military_time, normal_time);
                      if (   (hours > 2 && military_time)
                          || (hours > 1 && normal_time)) { 
                         output += '0' + timeStr[strPtr];

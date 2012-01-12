@@ -99,19 +99,30 @@
          setTimeout(function() {
             var pos = range.valueOf()[1]
 
-            /* Truncate the pasted value before applying the mask. */
-            var cleanVal = stripAlpha(self.domNode.value);
-            cleanVal = cleanVal.slice(0, self.options.mask.length);
-            console.log("cleanVal=", cleanVal);
-            self.domNode.value = cleanVal;
+            if (self.isNumber()) {
+   
+               /* Truncate the pasted value before applying the mask. */
+               var cleanVal = nummask.stripMask(self.domNode.value);
+               cleanVal = cleanVal.slice(0, self.options.mask.length);
+               console.log("cleanVal=", cleanVal);
+               self.domNode.value = cleanVal;
+   
+               /* Apply the mask. */
+               try {
+                  self.formatNumber();
+               } catch(err) {
+                  self.domNode.value = '0';
+                  self.formatNumber();
+               } // endcatch
 
-            /* Apply the mask and reposition the cursor. */
-            try {
-               self.formatNumber();
-            } catch(err) {
-               self.domNode.value = '0';
-               self.formatNumber();
-            } // endcatch
+
+            } else if (self.isTime()) {
+
+               /* Apply the mask. */
+               self.formatTime();
+            } // endif
+
+            /* Reposition the cursor. */
             self.setSelection(pos, pos);
          }, 1);
 
@@ -326,27 +337,47 @@
 
                   setTimeout(function(){
                      self.formatTime();
+                     if (chr == "backspace") {
+                        self.setSelection(pos - 1, pos - 1);
+                     } else if (chr == "delete") {
+                        self.setSelection(pos, pos);
+                     } // endif
                   }, 1);
 
 
                /* Check for digits. */
-               } else if (keylib.isDigit(chr) || chr == ':') {
+               } else if (keylib.isDigit(chr)) {
 
-                  /* If the key passes the sanity test then apply it. */
+                  /* Replace the current cursor selection with 
+                     the digit character, then figure out the new
+                     cursor position. */
                   this.updateSelection(chr);
-                  var newPos = this.setTimeCursor(pos, chr);
                   this.formatTime();
-                  console.log("newPos =", newPos);
-                  this.setSelection(newPos, newPos);
 
-                  this.node.trigger("valid", ev, this.node);
+                  /* If there's no selection, then figure out
+                     where the next cursor position is. */
+                  if (range[0] == range[1]) {
+                     var newPos = this.setTimeCursor(pos, chr);
+                     this.setSelection(newPos, newPos);
+
+                  /* We replaced a selection so put the cursor at
+                     the end of the selection range. */
+                  } else {
+                     this.setSelection(pos, pos);
+                  } // endif
+                  
+
+
+               /* For the colon, all we do is reposition the cursor. */
+               } else if (chr == ':') {
+                  var newPos = this.setTimeCursor(pos, chr);
+                  this.setSelection(newPos, newPos);
 
 
                /* BAD KEY PRESSED */
                } else {
                   /* Cancel the event but allow further propagation. */
                   ev.preventDefault();
-                  this.node.trigger("invalid", ev, this.node);
                } // endif 
             } // endif 
          } // endif 
@@ -659,9 +690,11 @@
        *  the cursor to for time masks.  To do this, we need to know 
        *  the current cursor position and which key the user pressed.
        ******/
-      setTimeCursor: function(pos, chr) {
+      setTimeCursor : function(pos, chr) {
          var digit = parseInt(chr);
          var newPos = -1;
+         var val = this.domNode.value;
+         var first_hours_digit = parseInt(val[0]);
 
          /* 
           *  I know this is quite ugly and brute force but this was
@@ -679,8 +712,18 @@
             } // endif
 
          } else if (pos == 1) { 
-            if (digit >= 0 || chr == ':') {
+            if (   chr == ':' 
+                || (first_hours_digit >=0 && first_hours_digit <= 1)
+                || (first_hours_digit == 2 && digit >= 0 && digit <= 3)
+               ) {
                newPos = 3;
+            } else if (   first_hours_digit == 2 
+                       && digit >= 4 
+                       && digit <= 5) {
+               newPos = 4; 
+            } else if (   first_hours_digit == 2 
+                       && digit >= 6) {
+               newPos = 6; 
             } else if (chr == 'a' || chr == 'p') {
                newPos = 9;
             } // endif
@@ -1142,25 +1185,12 @@
        *  Format a time field.
        ******/
       formatTime: function() {
-         var range = new Range(this);
-         console.log('range', range);
-
          if (this.options.mask) {
 
-            var tmask = timemask.wearMask(
+            this.domNode.value = timemask.wearMask(
                this.domNode.value, this.options.mask);
-            this.domNode.value = tmask;
 
-            /* Since the input value make have shrunk in size, we
-               have to get the new selection range.  The cursor will
-               be positioned at the end of the selection range. */
-            var pos = range.valueOf()[1]
-            console.log('r2', range[0], range[1], range.valueOf());
-            this.setSelection(pos + 1, pos + 1);
-              
-            return;
          } // endif
-
       }, // endfunction
 
 
