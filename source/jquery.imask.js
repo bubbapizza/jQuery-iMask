@@ -708,6 +708,18 @@
        *  the current cursor position and which key the user pressed.
        ******/
       setTimeCursor : function(pos, chr) {
+         if (this.timeType() == timemask.MILITARY_TIME) {
+            return this._setMilTimeCursor(pos, chr);
+         } else if (this.timeType() == timemask.NORMAL_TIME) {
+            return this._setAMPMTimeCursor(pos, chr);
+         } // endif
+      }, // endfunction 
+
+
+      /******
+       *  Figure out the cursor position for updating military times.
+       ******/
+      _setMilTimeCursor : function(pos, chr) {
          var digit = parseInt(chr);
          var newPos = -1;
          var val = this.domNode.value;
@@ -723,8 +735,6 @@
                newPos = 3;
             } else if (digit >= 0 && digit <= 2) {
                newPos = 1;
-            } else if (chr == 'a' || chr == 'p') {
-               newPos = 9;
             } // endif
 
          } else if (pos == 1) { 
@@ -740,11 +750,107 @@
             } else if (   first_hours_digit == 2 
                        && digit >= 6) {
                newPos = 6; 
-            } else if (chr == 'a' || chr == 'p') {
-               newPos = 9;
             } // endif
             
          } else if (pos == 2) { 
+            if (chr == ':') {
+               newPos = 3;
+            } else if (digit >= 0 && digit <= 5) {
+               newPos = 4;
+            } else if (digit > 5) {
+               newPos = 6;
+            } // endif
+
+         } else if (pos == 3) { 
+            if (digit >= 0 && digit <= 5) {
+               newPos = 4;
+            } else if (digit > 5 || chr == ':') {
+               newPos = 6;
+            } // endif
+
+         } else if (pos == 4) { 
+            if (digit >= 0 || chr == ':') {
+               newPos = 5;
+            } // endif
+
+         } else if (pos == 5) { 
+            if (chr == ':') {
+               newPos = 6;
+            } else if (digit >= 0 && digit <= 5) {
+               newPos = 7;
+            } else if (digit > 5) {
+               newPos = 8;
+            } // endif
+
+         } else if (pos == 6) { 
+            if (digit >= 0 && digit <= 5) {
+               newPos = 7;
+            } else if (digit > 5) {
+               newPos = 8;
+            } // endif
+
+         } else if (pos >= 7) { 
+            newPos = 8;
+         } // endif
+
+         return newPos;
+      }, // endfunction
+
+
+      /******
+       *  Figure out the cursor position for updating am/pm times.
+       ******/
+      _setAMPMTimeCursor : function(pos, chr) {
+         var digit = parseInt(chr);
+         var newPos = -1;
+         var val = this.domNode.value;
+         var hrsDigits = val.slice(0, val.indexOf(':')).length;
+         pos = pos - hrsDigits;
+
+         /* 
+          *  I know this is quite ugly and brute force but this was
+          *  the easiest way to handle cursor positioning for time
+          *  masks because it requires such exact and weird positioning.
+          */
+
+         /*
+          *  This part here is a little strange but it handles the 
+          *  positioning based on the variable number of hours digits.
+          */
+         if (hrsDigits == 1) {
+            if (pos == -1) {
+               if (digit > 1 || chr == ':') {
+                  newPos = 3;
+               } else if (digit >= 0 && digit <= 1) {
+                  newPos = 1;
+               } else if (chr == 'a' || chr == 'p') {
+                  newPos = 9;
+               } // endif
+            } // endif
+
+         } else if (hrsDigits == 2) {
+            if (pos == -2) {
+               if (digit > 1 || chr == ':') {
+                  newPos = 3;
+               } else if (digit >= 0 && digit <= 1) {
+                  newPos = 1;
+               } else if (chr == 'a' || chr == 'p') {
+                  newPos = 9;
+               } // endif
+   
+            } else if (pos == -1) { 
+               if (   chr == ':' 
+                   || (first_hours_digit == 1 && digit >= 0 && digit <= 2)
+                  ) {
+                  newPos = 2;
+               } else if (chr == 'a' || chr == 'p') {
+                  newPos = 9;
+               } // endif
+            } // endif
+         } // endif
+
+
+         if (pos == 0) { 
             if (chr == ':') {
                newPos = 3;
             } else if (digit >= 0 && digit <= 5) {
@@ -755,7 +861,7 @@
                newPos = 9;
             } // endif
 
-         } else if (pos == 3) { 
+         } else if (pos == 1) { 
             if (digit >= 0 && digit <= 5) {
                newPos = 4;
             } else if (digit > 5 || chr == ':') {
@@ -764,14 +870,14 @@
                newPos = 9;
             } // endif
 
-         } else if (pos == 4) { 
+         } else if (pos == 2) { 
             if (digit >= 0 || chr == ':') {
                newPos = 5;
             } else if (chr == 'a' || chr == 'p') {
                newPos = 9;
             } // endif
 
-         } else if (pos == 5) { 
+         } else if (pos == 3) { 
             if (chr == ':') {
                newPos = 6;
             } else if (digit >= 0 && digit <= 5) {
@@ -780,25 +886,31 @@
                newPos = 9;
             } // endif
 
-         } else if (pos == 6) { 
+         } else if (pos == 4) { 
             if (digit >= 0 && digit <= 5) {
                newPos = 7;
             } else if (digit > 5 || chr == 'a' || chr == 'p') {
                newPos = 9;
             } // endif
 
-         } else if (pos == 7) { 
+         } else if (pos == 5) { 
             if (digit >= 0 || chr == 'a' || chr == 'p') {
                newPos = 9;
             } // endif
 
-         } else if (pos >= 8) {
+         } else if (pos >= 6) {
             newPos = 9;
          } // endif
 
-         return newPos;
-      }, // endfunction
 
+         /* Return the new position adjusted by the number of hrs 
+            digits we have. */ 
+         if (hrsDigits == 1) {
+            return newPos - 1;
+         } else { 
+            return newPos;
+         } // endif
+      }, // endfunction
 
 
       /************ SELECT FIXED FIELD CHARACTERS **********/
