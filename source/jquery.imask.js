@@ -118,7 +118,7 @@
                console.log("cleanVal=", cleanVal);
                self.domNode.value = cleanVal;
    
-               /* Apply the mask. */
+               /* Apply the number mask. */
                try {
                   self.formatNumber();
                } catch(err) {
@@ -127,9 +127,8 @@
                } // endcatch
 
 
+            /* Apply the time mask if necessary. */
             } else if (self.isTime()) {
-
-               /* Apply the mask. */
                self.formatTime();
             } // endif
 
@@ -207,6 +206,8 @@
 
             /****** NUMBER MASK ******/
             } else if (this.isNumber()) {
+               var pos = range.valueOf()[0]
+               var decPos = this._getDecPos(this.domNode.value);
 
                /* 
                 *  See which key was pressed. 
@@ -230,8 +231,6 @@
                      chr == "backspace"
                   || chr == "delete") {
 
-                  var pos = range.valueOf()[1]
-                  var decPos = this._getDecPos(this.domNode.value);
                   var self = this;
                   var delChr = chr;
 
@@ -283,44 +282,45 @@
                         self.setCursorDecStart();
                      } //endfuction
                      , 1);
-                  this.node.trigger("valid", ev, this.node);
 
 
                /* Check for digits. */
                } else if (keylib.isDigit(chr)) {
 
-                  /* If the key passes the sanity test then apply it. */
-                  var val = this.sanityTest(range.replaceWith(chr));
-                  if(val !== false) {
+                  /* If the key blows the size of the number mask,
+                     catch the error and leave things the way they
+                     are. */
+                  var oldValue = this.domNode.value;
+                  try {
 
-                     /* If the key blows the size of the number mask,
-                        catch the error and leave things the way they
-                        are. */
-                     var oldValue = this.domNode.value;
-                     try {
-                        this.updateSelection(chr);
+                     /* When we're editing the decimal portion, we
+                        have to edit in replace mode.  Otherwise, 
+                        we're editing in 'insert' mode. */
+                     if (pos > decPos) {
+                        this.updateSelection(chr, 'replace');
                         this.formatNumber();
-                     } catch(err) {
-                        this.domNode.value = oldValue;
-                        this.setSelection(range);
-                     } // endcatch
-
-                  } // endif
-                  this.node.trigger("valid", ev, this.node);
-
+                        this.setSelection(pos + 1, pos + 1);
+                     } else {
+                        this.updateSelection(chr, 'insert');
+                        this.formatNumber();
+                     } // endif
+                     
+                  } catch(err) {
+                     this.domNode.value = oldValue;
+                     this.setSelection(range);
+                  } // endcatch
 
                /* BAD KEY PRESSED */
                } else {
                   /* Cancel the event but allow further propagation. */
                   ev.preventDefault();
-                  this.node.trigger("invalid", ev, this.node);
                } // endif 
 
 
 
             /****** TIME MASK ******/
             } else if (this.isTime()) {
-               var pos = range.valueOf()[1];
+               var pos = range.valueOf()[0];
 
                /* 
                 *  See which key was pressed. 
@@ -366,7 +366,7 @@
                   /* Replace the current cursor selection with 
                      the digit character, then figure out the new
                      cursor position. */
-                  this.updateSelection(chr);
+                  this.updateSelection(chr, 'replace');
                   this.formatTime();
 
                   /* If there's no selection, then figure out
@@ -378,7 +378,7 @@
                   /* We replaced a selection so put the cursor at
                      the end of the selection range. */
                   } else {
-                     this.setSelection(pos, pos);
+                     this.setSelection(pos + 1, pos + 1);
                   } // endif
                   
 
@@ -442,8 +442,6 @@
               this._wearMask(this.domNode.value, this.options.mask);
          } //endif 
 
-         /* Run the sanity test on the text field's value. */
-         // this.sanityTest( this.domNode.value );
          console.log("2'" + this.domNode.value + "'", "valtype=", typeof(this.domNode.value));
 
 
@@ -538,16 +536,20 @@
       /****** 
        *  Replace the currently selected text with the given string.
        ******/
-      updateSelection: function( chr ) {
+      updateSelection: function(chr, mode) {
+         /* By default, mode is 'insert' instead of 'replace'. */
+         mode = (!mode) ? "insert" : mode;
+
          var value = this.domNode.value
           ,  range = new Range( this )
-          , output = range.replaceWith( chr );
+          , output = range.replaceWith(chr, mode);
+
 
          this.domNode.value = output;
          if( range[0] === range[1] ){
-            this.setSelection( range[0] + 1, range[0] + 1 );
+            this.setSelection(range[0] + 1, range[0] + 1);
          }else{
-            this.setSelection( range );
+            this.setSelection(range);
          } // endif
       }, // endfunction
 
@@ -730,7 +732,7 @@
                 || (first_hours_digit >=0 && first_hours_digit <= 1)
                 || (first_hours_digit == 2 && digit >= 0 && digit <= 3)
                ) {
-               newPos = 3;
+               newPos = 2;
             } else if (   first_hours_digit == 2 
                        && digit >= 4 
                        && digit <= 5) {
@@ -764,7 +766,7 @@
 
          } else if (pos == 4) { 
             if (digit >= 0 || chr == ':') {
-               newPos = 6;
+               newPos = 5;
             } else if (chr == 'a' || chr == 'p') {
                newPos = 9;
             } // endif
@@ -905,61 +907,6 @@
 
 
       /******
-       *  Run the sanity test on the field.  We pass the non-masked
-       *  value of the input field to the sanity function/regexp.
-       *  This test is used for custom input validation.
-       ******/  
-      sanityTest: function( str, p ){
-         var sanity = this.options.sanity;
-
-         /* If the sanity option is a regular expression, then just
-            test the input value against the regexp.  This will
-            return either true or false. */
-         if(sanity instanceof RegExp){
-            return sanity.test(str);
-
-
-         /* If the sanity option is a function, then pass the function
-            the input value PLUS the character position. */ 
-         }else if($.isFunction(sanity)){
-            var sanityCheck = sanity(str, p);
-
-            /* See if we got a boolean back.  If so, just return it. */
-            if(typeof(sanityCheck) == 'boolean') {
-               return sanityCheck;
-
-            /* If we got an undefined value back, don't return anything */
-            } else if(typeof(sanityCheck) != 'undefined') {
-
-               /* If this field is a string mask, apply the mask to 
-                  the returned sanity value and show it in the input
-                  field. */
-               if( this.isFixed() ){
-                  var p = this.getSelectionStart();
-                  var mask = this.options.mask.toLowerCase()
-
-                  this.domNode.value = this._wearMask(sanityCheck, mask);
-                  this.setSelection( p, p+1 );
-                  this.selectNext();
-
-               /* For numbers, format the sanity value into a number and
-                  display it in the input field. */
-               }else if( this.isNumber() ){
-                  var range = new Range( this );
-                  this.domNode.value = sanityCheck;
-                  this.setSelection( range );
-                  this.formatNumber();
-               } // endif
-
-               return false;
-            } // endif
-
-         } // endif
-      }, // endfunction
-
-
-
-      /******
        *  This function checks to see if a fixed input character is
        *  valide based on the current cursor position.
        ******/
@@ -970,9 +917,6 @@
          var val = this.domNode.value.split('');
          val.splice( p, 1, chr );
          val = val.join('');
-
-         var ret = this.sanityTest( val, p );
-         if(typeof(ret) == 'boolean'){ return ret; }
 
          if(({
             '9' : this.options.validNumbers,
@@ -1247,8 +1191,8 @@
       this['1']  = this.range[1];
    } // endfunction
 
-   Range.prototype = {
 
+   Range.prototype = {
       /*****
        *  The valueOf function always returns what the current selection
        *  range should be.  range[0] and range[1] record what the 
@@ -1260,11 +1204,23 @@
          return [ this.range[0] - len, this.range[1] - len ];
       }, // endfunction
 
-      replaceWith : function( str ){
+
+      /*****
+       *  Here we are actually applying the key that was pressed.
+       *  The only place this is called from is updateSelection.
+       *****/
+      replaceWith : function(str, mode){
          var  val = this.obj.domNode.value
           , range = this.valueOf();
 
-         return val.substr( 0, range[0] ) + str + val.substr( range[1] );
+         /* If mode is 'replace' and nothing is selected, then blow
+            away the character to the right of the cursor. */
+         if (range[0] == range[1] && mode == 'replace') {
+            return val.substr(0, range[0]) + str + val.substr(range[0] + 1);
+         } else {
+            return val.substr(0, range[0]) + str + val.substr(range[1]);
+         } // endif
+   
       } // endfunction
    };
 
