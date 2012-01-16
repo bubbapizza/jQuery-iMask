@@ -63,6 +63,19 @@ timemask = {
          return this.MILITARY_TIME;
       } // endif
    }, // endfunction 
+
+
+   /******
+    *  Small function that returns whether or not a mask is 
+    *  military or normal time. 
+    ******/
+   maskType : function(mask) {
+      if (mask[0] == '>') {
+         return this.NORMAL_TIME;
+      } else {
+         return this.MILITARY_TIME;
+      } // endif
+   }, // endfunction 
          
    
    
@@ -365,14 +378,19 @@ timemask = {
    
    
       return output;
-   } // endfunction
+   }, // endfunction
 
 
    /******
-    *  To determine the next cursor position, we need the current cursor
-    *  position and the event (a.k.a. what key was pressed)
+    *  To determine the next cursor position, we need the following
+    *  parameters:
+    *     pos  -> the current cursor position
+    *     chr  -> the event (a.k.a. what key was pressed)
+    *     timeStr  -> the current time in the input field
+    *     mask -> the time mask
     ******/
-   cursorPos : function(pos, chr) {
+   newCursorPos : function(lastPos, chr, timeStr, mask) {
+      var fsm, hrsDigits, currState, currEvent;
       var eventID = {
          "0"  : 0,
          "1"  : 1,
@@ -440,6 +458,70 @@ timemask = {
       "7" : ["8", "8", "8", "8", "8", "8", "8", "8", "8", "8", "7", "9"],
       "8" : ["8", "8", "8", "8", "8", "8", "8", "8", "8", "8", "8", "9"],
       "9" : ["9", "9", "9", "9", "9", "9", "9", "9", "9", "9", "9", "9"]}
+
+      /*
+       *  Figure out the current state.
+       */
+      currState = parseInt(lastPos);
+      if (this.maskType(mask) == this.MILITARY_TIME) {
+         if (lastPos == 1) {
+            if (timeStr[0] == '0' || timeStr[0] == '1') {
+               currState = "1a";
+            } else if (timeStr[0] == '2') {
+               currState = "1b";
+            } else {
+               currState = "0";
+            } // endif
+         } // endif
+      } // endif
+
+      /*
+       *  Figure out what the current event is.
+       */
+      if (chr == 'a' || chr == 'p') {
+         currEvent = 'ap';
+      } else {
+         currEvent = chr;
+      } // endif
+     
+      /* 
+       *  Figure out what finite state machine to use.
+       */
+      if (this.maskType(mask) == this.MILITARY_TIME) {
+         fsm = militaryFSM;
+      } else if (this.maskType(mask) == this.NORMAL_TIME) {
+         hrsDigits = timeStr.slice(0, timeStr.indexOf(':')).length;
+         if (hrsDigits == 1) { 
+            fsm = ampm1DigitHrFSM; 
+         } else if (hrsDigits == 2) {
+            fsm = ampm2DigitHrFSM; 
+         } // endif
+      } // endif
+
+
+      /* 
+       *  Figure out the new cursor position.
+       */
+      if (fsm) {
+         newState = fsm[currState][eventID[currEvent]];
+
+         /* If we get an X for next state, that means we have to use
+            the opposite finite state machine. */
+         if (newState == "X") {
+            if (hrsDigits == 1) {
+               fsm = ampm2DigitHrFSM;
+            } else {
+               fsm = ampm1DigitHrFSM;
+            } // endif
+            
+            newState = fsm[currState][eventID[currEvent]];
+         } // endif
+
+         return stateCursorPos[newState];
+      } // endif
+   
+      return 0;
+   } // endfunction
 }
 
 

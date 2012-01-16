@@ -115,7 +115,6 @@
                /* Truncate the pasted value before applying the mask. */
                var cleanVal = nummask.stripMask(self.domNode.value);
                cleanVal = cleanVal.slice(0, self.options.mask.length);
-               console.log("cleanVal=", cleanVal);
                self.domNode.value = cleanVal;
    
                /* Apply the number mask. */
@@ -372,7 +371,8 @@
                   /* If there's no selection, then figure out
                      where the next cursor position is. */
                   if (range[0] == range[1]) {
-                     var newPos = this.setTimeCursor(pos, chr);
+                     var newPos = timemask.newCursorPos(
+                        pos, chr, this.domNode.value, this.options.mask);
                      this.setSelection(newPos, newPos);
 
                   /* We replaced a selection so put the cursor at
@@ -385,7 +385,8 @@
 
                /* For the colon, all we do is reposition the cursor. */
                } else if (chr == ':') {
-                  var newPos = this.setTimeCursor(pos, chr);
+                  var newPos = timemask.newCursorPos(
+                     pos, chr, this.domNode.value, this.options.mask);
                   this.setSelection(newPos, newPos);
 
 
@@ -441,8 +442,6 @@
             this.domNode.value = 
               this._wearMask(this.domNode.value, this.options.mask);
          } //endif 
-
-         console.log("2'" + this.domNode.value + "'", "valtype=", typeof(this.domNode.value));
 
 
          /* 
@@ -701,216 +700,6 @@
          } // endif 
       }, // endfunction
 
-
-      /****** 
-       *  This function returns an integer indicating where to move 
-       *  the cursor to for time masks.  To do this, we need to know 
-       *  the current cursor position and which key the user pressed.
-       ******/
-      setTimeCursor : function(pos, chr) {
-         if (this.timeType() == timemask.MILITARY_TIME) {
-            return this._setMilTimeCursor(pos, chr);
-         } else if (this.timeType() == timemask.NORMAL_TIME) {
-            return this._setAMPMTimeCursor(pos, chr);
-         } // endif
-      }, // endfunction 
-
-
-      /******
-       *  Figure out the cursor position for updating military times.
-       ******/
-      _setMilTimeCursor : function(pos, chr) {
-         var digit = parseInt(chr);
-         var newPos = -1;
-         var val = this.domNode.value;
-         var first_hours_digit = parseInt(val[0]);
-
-         /* 
-          *  I know this is quite ugly and brute force but this was
-          *  the easiest way to handle cursor positioning for time
-          *  masks because it requires such exact and weird positioning.
-          */
-         if (pos == 0) {
-            if (digit > 2 || chr == ':') {
-               newPos = 3;
-            } else if (digit >= 0 && digit <= 2) {
-               newPos = 1;
-            } // endif
-
-         } else if (pos == 1) { 
-            if (   chr == ':' 
-                || (first_hours_digit >=0 && first_hours_digit <= 1)
-                || (first_hours_digit == 2 && digit >= 0 && digit <= 3)
-               ) {
-               newPos = 2;
-            } else if (   first_hours_digit == 2 
-                       && digit >= 4 
-                       && digit <= 5) {
-               newPos = 4; 
-            } else if (   first_hours_digit == 2 
-                       && digit >= 6) {
-               newPos = 6; 
-            } // endif
-            
-         } else if (pos == 2) { 
-            if (chr == ':') {
-               newPos = 3;
-            } else if (digit >= 0 && digit <= 5) {
-               newPos = 4;
-            } else if (digit > 5) {
-               newPos = 6;
-            } // endif
-
-         } else if (pos == 3) { 
-            if (digit >= 0 && digit <= 5) {
-               newPos = 4;
-            } else if (digit > 5 || chr == ':') {
-               newPos = 6;
-            } // endif
-
-         } else if (pos == 4) { 
-            if (digit >= 0 || chr == ':') {
-               newPos = 5;
-            } // endif
-
-         } else if (pos == 5) { 
-            if (chr == ':') {
-               newPos = 6;
-            } else if (digit >= 0 && digit <= 5) {
-               newPos = 7;
-            } else if (digit > 5) {
-               newPos = 8;
-            } // endif
-
-         } else if (pos == 6) { 
-            if (digit >= 0 && digit <= 5) {
-               newPos = 7;
-            } else if (digit > 5) {
-               newPos = 8;
-            } // endif
-
-         } else if (pos >= 7) { 
-            newPos = 8;
-         } // endif
-
-         return newPos;
-      }, // endfunction
-
-
-      /******
-       *  Figure out the cursor position for updating am/pm times.
-       ******/
-      _setAMPMTimeCursor : function(pos, chr) {
-         var digit = parseInt(chr);
-         var newPos = -1;
-         var val = this.domNode.value;
-         var hrsDigits = val.slice(0, val.indexOf(':')).length;
-         pos = pos - hrsDigits;
-
-         /* 
-          *  I know this is quite ugly and brute force but this was
-          *  the easiest way to handle cursor positioning for time
-          *  masks because it requires such exact and weird positioning.
-          */
-
-         /*
-          *  This part here is a little strange but it handles the 
-          *  positioning based on the variable number of hours digits.
-          */
-         if (hrsDigits == 1) {
-            if (pos == -1) {
-               if (digit > 1 || chr == ':') {
-                  newPos = 3;
-               } else if (digit >= 0 && digit <= 1) {
-                  newPos = 1;
-               } else if (chr == 'a' || chr == 'p') {
-                  newPos = 9;
-               } // endif
-            } // endif
-
-         } else if (hrsDigits == 2) {
-            if (pos == -2) {
-               if (digit > 1 || chr == ':') {
-                  newPos = 3;
-               } else if (digit >= 0 && digit <= 1) {
-                  newPos = 1;
-               } else if (chr == 'a' || chr == 'p') {
-                  newPos = 9;
-               } // endif
-   
-            } else if (pos == -1) { 
-               if (   chr == ':' 
-                   || (first_hours_digit == 1 && digit >= 0 && digit <= 2)
-                  ) {
-                  newPos = 2;
-               } else if (chr == 'a' || chr == 'p') {
-                  newPos = 9;
-               } // endif
-            } // endif
-         } // endif
-
-
-         if (pos == 0) { 
-            if (chr == ':') {
-               newPos = 3;
-            } else if (digit >= 0 && digit <= 5) {
-               newPos = 4;
-            } else if (digit > 5) {
-               newPos = 6;
-            } else if (chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos == 1) { 
-            if (digit >= 0 && digit <= 5) {
-               newPos = 4;
-            } else if (digit > 5 || chr == ':') {
-               newPos = 6;
-            } else if (chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos == 2) { 
-            if (digit >= 0 || chr == ':') {
-               newPos = 5;
-            } else if (chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos == 3) { 
-            if (chr == ':') {
-               newPos = 6;
-            } else if (digit >= 0 && digit <= 5) {
-               newPos = 7;
-            } else if (digit > 5 || chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos == 4) { 
-            if (digit >= 0 && digit <= 5) {
-               newPos = 7;
-            } else if (digit > 5 || chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos == 5) { 
-            if (digit >= 0 || chr == 'a' || chr == 'p') {
-               newPos = 9;
-            } // endif
-
-         } else if (pos >= 6) {
-            newPos = 9;
-         } // endif
-
-
-         /* Return the new position adjusted by the number of hrs 
-            digits we have. */ 
-         if (hrsDigits == 1) {
-            return newPos - 1;
-         } else { 
-            return newPos;
-         } // endif
-      }, // endfunction
 
 
       /************ SELECT FIXED FIELD CHARACTERS **********/
@@ -1177,7 +966,6 @@
       formatNumber: function() {
          var editDecimal, newPos;
          var range = new Range(this);
-         console.log('range', range);
 
          /* Are we editing the decimal portion of the number? */
          if (range[1] > this._getDecPos(this.domNode.value)) {
@@ -1188,7 +976,6 @@
 
 
          /* If this field has a number mask, then apply it. */
-         console.log("decimal?", editDecimal);
          if (this.options.mask) {
 
             var nmask = nummask.wearMask(
@@ -1199,7 +986,6 @@
                have to get the new selection range.  The cursor will
                be positioned at the end of the selection range. */
             var pos = range.valueOf()[1]
-            console.log('r2', range[0], range[1], range.valueOf());
             if (editDecimal == false) {
                this.setSelection(pos, pos);
             } else {
@@ -1296,7 +1082,6 @@
       this.range = obj.getSelectionRange();
       this.buffer = obj.domNode.value;
       this.len = obj.domNode.value.length
-      console.log("nodeval='" + typeof(obj.domNode.value) + "'");
       this.obj   = obj;
 
       this['0']  = this.range[0];
