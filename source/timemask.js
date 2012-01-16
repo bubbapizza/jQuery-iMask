@@ -195,7 +195,9 @@ timemask = {
                      /* We don't have a valid 2nd digit, so the hours slots 
                         are now all filled up. */
                      } else {
-                        output += '0';
+                        if (military_time) {
+                           output += '0';
+                        } // endif
                         hrs_digits = 2;
                      } // endif
                   } // endif
