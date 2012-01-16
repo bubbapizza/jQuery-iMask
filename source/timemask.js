@@ -150,10 +150,12 @@ timemask = {
                      hrs_digits = 2;
    
                   } else if (hrs_digits == 1) {
-                     if (normal_time) {
-                        output = '' + output;
-                     } else {
-                        output = '0' + output; 
+                     if (military_time) {
+                        if (output == '1' || output == '2') {
+                           output = output + '0'; 
+                        } else {
+                           output = '0' + output; 
+                        } // endif
                      } // endif
                      hrs_digits = 2;
                   } // endif

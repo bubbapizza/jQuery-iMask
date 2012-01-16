@@ -378,7 +378,9 @@
                   /* We replaced a selection so put the cursor at
                      the end of the selection range. */
                   } else {
-                     this.setSelection(pos + 1, pos + 1);
+                     var newPos = timemask.newCursorPos(pos, 
+                        chr, this.domNode.value, this.options.mask);
+                     this.setSelection(newPos, newPos);
                   } // endif
                   
 
