@@ -37,10 +37,10 @@ timemask = {
          } // endif
       } // endfor
 
-      /* For normal time strings, strip off leading zeros.  For
-         military time, strip out colons. */
+      /* For normal time strings, strip off leading zeros and/or the 
+         leading colon.  For military time, strip out colons. */
       if (found_ampm) {
-         output = output.replace(/^0+/, '');
+         output = output.replace(/(^0+)*:*0*/, '');
       } else {
          output = output.replace(/:/, '');
       } // endif
@@ -393,6 +393,16 @@ timemask = {
     ******/
    newCursorPos : function(lastPos, chr, timeStr, mask) {
       var fsm, hrsDigits, currState, currEvent;
+      var militaryFSM = new Array();
+      var ampm1DigitHrFSM = new Array();
+      var ampm2DigitHrFSM = new Array();
+
+      /* We MUST have a mask length of 5 or 8 */
+      if (mask.length != 5 && mask.length != 8) {
+         return 0;
+      } // endif
+
+
       var eventID = {
          "0"  : 0,
          "1"  : 1,
@@ -406,7 +416,7 @@ timemask = {
          "9"  : 9,
          ":"  : 10,
          "ap" : 11
-      } 
+      }
 
       var stateCursorPos = {
          "0"  : 0,
@@ -423,7 +433,42 @@ timemask = {
          "9"  : 9
       } 
 
-      var militaryFSM = {
+
+      /****** 5 DIGIT MASK ******/
+
+      militaryFSM[5] = {
+      //       0     1     2     3    4    5    6    7    8    9    :
+      "0"  : ["1a", "1a", "1b", "2", "2", "2", "2", "2", "2", "2", "3"],
+      "1a" : ["2" , "2" , "2" , "2", "2", "2", "2", "2", "2", "2", "3"],
+      "1b" : ["2" , "2" , "2" , "2", "4", "4", "5", "5", "5", "5", "3"],
+      "2"  : ["4" , "4" , "4" , "4", "4", "4", "5", "5", "5", "5", "3"],
+      "3"  : ["4" , "4" , "4" , "4", "4", "4", "5", "5", "5", "5", "3"],
+      "4"  : ["5" , "5" , "5" , "5", "5", "5", "5", "5", "5", "5", "4"],
+      "5"  : ["5" , "5" , "5" , "5", "5", "5", "5", "5", "5", "5", "5"]}
+
+      ampm1DigitHrFSM[5] = {
+      //      0    1    2    3    4    5    6    7    8    9    :   ap
+      "0" : ["0", "1", "1", "1", "1", "1", "1", "1", "1", "1", "2", "5"],
+      "1" : ["X", "X", "X", "3", "3", "3", "4", "4", "4", "4", "2", "5"],
+      "2" : ["3", "3", "3", "3", "3", "3", "4", "4", "4", "4", "2", "5"],
+      "3" : ["4", "4", "4", "4", "4", "4", "4", "4", "4", "4", "3", "5"],
+      "4" : ["4", "4", "4", "4", "4", "4", "4", "4", "4", "4", "4", "5"],
+      "5" : ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5"]}
+
+      ampm2DigitHrFSM[5] = {
+      //      0    1    2    3    4    5    6    7    8    9    :   ap
+      "0" : ["X", "1", "X", "X", "X", "X", "X", "X", "X", "X", "3", "6"],
+      "1" : ["2", "2", "2", "X", "X", "X", "X", "X", "X", "X", "3", "6"],
+      "2" : ["4", "4", "4", "4", "4", "4", "5", "5", "5", "5", "3", "6"],
+      "3" : ["4", "4", "4", "4", "4", "4", "5", "5", "5", "5", "3", "6"],
+      "4" : ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "4", "6"],
+      "5" : ["5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "5", "6"],
+      "6" : ["6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6", "6"]}
+
+
+      /****** 8 DIGIT MASK ******/
+
+      militaryFSM[8] = {
       //       0     1     2     3    4    5    6    7    8    9    :
       "0"  : ["1a", "1a", "1b", "2", "2", "2", "2", "2", "2", "2", "3"],
       "1a" : ["2" , "2" , "2" , "2", "2", "2", "2", "2", "2", "2", "3"],
@@ -436,7 +481,7 @@ timemask = {
       "7"  : ["8" , "8" , "8" , "8", "8", "8", "8", "8", "8", "8", "7"],
       "8"  : ["8" , "8" , "8" , "8", "8", "8", "8", "8", "8", "8", "8"]}
 
-      var ampm1DigitHrFSM = {
+      ampm1DigitHrFSM[8] = {
       //      0    1    2    3    4    5    6    7    8    9    :   ap
       "0" : ["0", "1", "1", "1", "1", "1", "1", "1", "1", "1", "2", "8"],
       "1" : ["X", "X", "X", "3", "3", "3", "4", "4", "4", "4", "2", "8"],
@@ -448,7 +493,7 @@ timemask = {
       "7" : ["7", "7", "7", "7", "7", "7", "7", "7", "7", "7", "7", "8"],
       "8" : ["8", "8", "8", "8", "8", "8", "8", "8", "8", "8", "8", "8"]}
 
-      var ampm2DigitHrFSM = {
+      ampm2DigitHrFSM[8] = {
       //      0    1    2    3    4    5    6    7    8    9    :   ap
       "0" : ["X", "1", "X", "X", "X", "X", "X", "X", "X", "X", "3", "9"],
       "1" : ["2", "2", "2", "X", "X", "X", "X", "X", "X", "X", "3", "9"],
@@ -490,13 +535,13 @@ timemask = {
        *  Figure out what finite state machine to use.
        */
       if (this.maskType(mask) == this.MILITARY_TIME) {
-         fsm = militaryFSM;
+         fsm = militaryFSM[mask.length];
       } else if (this.maskType(mask) == this.NORMAL_TIME) {
          hrsDigits = timeStr.slice(0, timeStr.indexOf(':')).length;
          if (hrsDigits == 1) { 
-            fsm = ampm1DigitHrFSM; 
+            fsm = ampm1DigitHrFSM[mask.length]; 
          } else if (hrsDigits == 2) {
-            fsm = ampm2DigitHrFSM; 
+            fsm = ampm2DigitHrFSM[mask.length]; 
          } // endif
       } // endif
 
@@ -511,9 +556,9 @@ timemask = {
             the opposite finite state machine. */
          if (newState == "X") {
             if (hrsDigits == 1) {
-               fsm = ampm2DigitHrFSM;
+               fsm = ampm2DigitHrFSM[mask.length];
             } else {
-               fsm = ampm1DigitHrFSM;
+               fsm = ampm1DigitHrFSM[mask.length];
             } // endif
             
             newState = fsm[currState][eventID[currEvent]];
