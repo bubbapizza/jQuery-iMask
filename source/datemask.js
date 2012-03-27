@@ -169,7 +169,7 @@ datemask = {
                      } else {
                         output += dateStr[strPtr];
                         dayDigits = 1;
-                        strPtr == 1;
+                        strPtr += 1;
                      } // endif
                         
    
@@ -180,13 +180,19 @@ datemask = {
                      /* Check to make sure the 2nd digit produces a valid
                         number of days.  If so, then use it for the 2nd 
                         digit of the day slot. */
-                     if (day <= 31) {
-                        /* We may or may not have a valid day depending on
-                           the month & year. */
-                        null;
-                     } else { 
+                     if (this.validDay(day, month, year)) {
+                        output += dateStr[strPtr];
+                        dayDigits = 2;
+                        strPtr += 1;
 
-                  
+                     /* We don't have a valid 2nd digit for the day so
+                        we're done with days. */
+                     } else {
+                        output += output.slice(0, -1) + ' ' + 
+                                  output.slice(-1);
+                        dayDigits = 2;
+                     } // endif
+
                   } // endif
                } // endif
    
