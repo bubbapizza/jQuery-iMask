@@ -7,7 +7,7 @@
 
 datemask = {
 
-   DEFAULT_YEARSTART : 1920,
+   CENTURY_START : 1920,
 
 
    /******
@@ -51,9 +51,44 @@ datemask = {
 
 
    /******
+    *  Small function to determine the number of year digits.
+    ******/
+   yearDigits : function(mask) {
+      if ((mask.search('yyyy') == -1) &&
+          (mask.search('YYYY') == -1)) {
+         return 2;
+      } else {
+         return 4;
+      } // endif
+   } // endfunction
+   
+
+
+   /******
     *  Small function to determine if a year is a leap year or not.
     ******/
-   leapYear : function(year) {
+   leapYear : function(year, mask) {
+      var century;
+      var cutOffYear;
+
+      /* If the mask specifies a 2-digit year, then convert the year
+         to a 4 digit number so the rest of our algorithm works
+         properly. */
+      if (this.yearDigits(mask) == 2) {
+         century = parseInt(this.CENTURY_START / 100) * 100;
+         cutOffYear = this.CENTURY_START - century;
+         
+         /* If the 2-digit year is less than the last 2 digits of
+            the start of the century, then the 2-digit year is for
+            the *next* century. */
+         if (year < cutOffYear) {
+            year += century + 100;
+         } else {
+            year += century;
+         } // endif
+      } // endif
+
+
       if (year < 0 || (year % 4) != 0) {
          return false;
       } // endif
@@ -70,13 +105,13 @@ datemask = {
    /******
     *  Small function to determine the number of days in a month.
     ******/
-   monthDays : function(month, year) {
+   monthDays : function(month, year, mask) {
       var daysOfMonth = {
          "normal" : [null, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
          "leapyr" : [null, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
       } 
 
-      if (this.leapYear(year)) {
+      if (this.leapYear(year, mask)) {
          return daysOfMonth["leapyr"][month];
       } else {
          return daysOfMonth["normal"][month];
@@ -86,21 +121,6 @@ datemask = {
       
 
    /******
-    *  Small function to determine the number of year digits.
-    ******/
-   yearDigits : function(mask) {
-      if ((mask.search('yyyy') == -1) &&
-          (mask.search('YYYY') == -1)) {
-         return 2;
-      } else {
-         return 4;
-      } // endif
-   } // endfunction
-   
-
-
-   monthDays : function(month, year) {
-   /******
     *  Small function to determine if the day is valid, given also
     *  the year and month.  This function assumes that the month
     *  and year are either:
@@ -108,7 +128,7 @@ datemask = {
     *     1) greater than 0 and valid or
     *     2) equal to 0  
     ******/
-   validDay : function(day, month, year) {
+   validDay : function(day, month, year, mask) {
 
       /* The day must be at least 1 or more. */
       if (day <= 0) { 
@@ -124,7 +144,7 @@ datemask = {
          (i.e. the year == 0), we still get the right number of 
          possible days for February because 0 is a leap year. */
       } else {
-         return (day <= this.monthDays(month, year));
+         return (day <= this.monthDays(month, year, mask));
 
    } // endfunction
 
@@ -139,7 +159,7 @@ datemask = {
     *  When applying the mask, the algorithm tries to do a best guess as
     *  to which slot to put each digit of the date string into.
     ******/
-   wearMask : function(dateStr, mask, yearStart) {
+   wearMask : function(dateStr, mask, centuryStart) {
       var maskPtr;
       var day = 0;
       var month = 0;
@@ -148,9 +168,9 @@ datemask = {
       var monthDigits = 0;
       var yearDigits = 0;
    
-      /* If no yearStart was specified, assume DEFAULT_YEARSTART. */
-      if (!yearStart) {
-         yearStart = DEFAULT_YEARSTART;
+      /* If centuryStart was specified override CENTURY_START. */
+      if (centuryStart) {
+         this.CENTURY_START = centuryStart;
       } // endif
 
       /* Strip out bad characters from the time string. */
@@ -216,7 +236,7 @@ datemask = {
                      /* Check to make sure the 2nd digit produces a valid
                         day number.  If so, then use it for the 2nd 
                         digit of the day slot. */
-                     if (this.validDay(day, month, year)) {
+                     if (this.validDay(day, month, year, mask)) {
                         output += dateStr[strPtr];
                         dayDigits = 2;
                         strPtr += 1;
@@ -338,20 +358,24 @@ datemask = {
                 *  Feb 29.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
-                  
-                  if (yearDigits == this.yearDigits(mask)) {
-                     if (month == 2 && day == 29) {
-                        null; 
-                           
-                     } else  {
-                        output += dateStr[strPtr];
-                        yearDigits += 1;
-                        strPtr += 1;
-                     } // endif
+                  year += 10 * year + parseInt(dateStr[strPtr]);
 
-                  } else  {
+                  /* If we're entering the last digit then check to make
+                     sure we only enter a leap year if the month and
+                     day is Feb 29. */
+                  if (yearDigits != this.yearDigits(mask) || 
+                      (   yearDigits == this.yearDigits(mask)
+                       && month == 2 
+                       && day == 29 
+                       && this.leapYear(year, mask)) 
+                     ) {
                      output += dateStr[strPtr];
                      yearDigits += 1;
+                     strPtr += 1;
+                  
+                  /* We got a bogus year for a year that has to be a 
+                     leap year so keep going until we hit a good digit. */
+                  } else {
                      strPtr += 1;
                   } // endif
                } // endif 
