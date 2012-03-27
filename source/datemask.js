@@ -18,7 +18,6 @@ datemask = {
    _stripMask : function(str) {
       var output = '';
       var slashCount = 0;
-      var digits = false;
    
       for (var i = 0; i < str.length; i += 1) {
    
@@ -28,14 +27,7 @@ datemask = {
 
          /*** DIGIT ***/
          if (keylib.isDigit(str[i])) {
-            /* If we have no digits yet, ignore leading zeros. */
-            if (!digits && str[i] != '0') {
-               digits = true;
-            } // endif
-
-            if (digits) {
-               output += str[i];
-            } // endif
+            output += str[i];
    
          /*** SLASH ***/
          } else if (str[i] == '/') {
@@ -50,7 +42,6 @@ datemask = {
                slashCount += 1;
             } // endif
 
-            digits = false;
          } // endif
       } // endfor
 
@@ -94,6 +85,21 @@ datemask = {
 
       
 
+   /******
+    *  Small function to determine the number of year digits.
+    ******/
+   yearDigits : function(mask) {
+      if ((mask.search('yyyy') == -1) &&
+          (mask.search('YYYY') == -1)) {
+         return 2;
+      } else {
+         return 4;
+      } // endif
+   } // endfunction
+   
+
+
+   monthDays : function(month, year) {
    /******
     *  Small function to determine if the day is valid, given also
     *  the year and month.  This function assumes that the month
@@ -169,7 +175,7 @@ datemask = {
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
                   if (dayDigits == 0) {
-                     output += "dd"
+                     output += maskChr;
    
                   } else if (dayDigits == 1) {
                      output += output.slice(0, -1) + ' ' + 
@@ -179,7 +185,7 @@ datemask = {
    
                /*
                 *  Otherwise, we must have a digit so see where it
-                *  fits in the hours digit slots.
+                *  fits in the day digit slots.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
    
@@ -235,14 +241,12 @@ datemask = {
                     
                /*
                 *  If we ran out of dateStr characters, or we hit the
-                *  am/pm indicator, or we hit the ':' character, then
-                *  we're done with entering minutes.  Just put zeros in 
-                *  the remaining slots.
+                *  '/' character, then we're done with entering months.  
                 */
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
                   if (monthDigits == 0) {
-                     output += "mm"
+                     output += maskChr;
                      
                   } else if (monthDigits == 1) {
                      output += output.slice(0, -1) + ' ' + 
@@ -253,7 +257,7 @@ datemask = {
    
                /*
                 *  Otherwise, if we have a digit then see where it
-                *  fits in the minutes digit slots.
+                *  fits in the month digit slots.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
 
@@ -310,31 +314,45 @@ datemask = {
                     
                /*
                 *  If we ran out of dateStr characters, or we hit the
-                *  am/pm indicator, then we're done with entering seconds.  
-                *  Just put zeros in the remaining slots.
+                *  '/' character, then we're done entering years.
                 */
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
+
+                  /* If no year digits have been entered, fill the
+                     field wit mask characters. */
                   if (yearDigits == 0) {
-                     null;
+                     output += maskChr;
                      
-                  } else if (yearDigits == 1) {
-                     null;
+                  /* If we have at least one year digit, then pad with
+                     spaces. */
+                  } else if (yearDigits > 0) {
+                     output += output.slice(0, -1) + ' ' + 
+                               output.slice(-1);
+                     yearDigits += 1;
                   } // endif
    
                /*
-                *  Otherwise, if we have a digit then see where it
-                *  fits in the seconds digit slots.
+                *  Otherwise, if we have a digit then check to make sure
+                *  the user only enters a leap year if the month/day is
+                *  Feb 29.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
-   
-                  /** FIRST DIGIT **/
-                  if (yearDigits == 0) {
-                     null;    
-   
-                  /** 2ND DIGIT **/
-                  } else if (yearDigits == 1) { 
-                     null;
+                  
+                  if (yearDigits == this.yearDigits(mask)) {
+                     if (month == 2 && day == 29) {
+                        null; 
+                           
+                     } else  {
+                        output += dateStr[strPtr];
+                        yearDigits += 1;
+                        strPtr += 1;
+                     } // endif
+
+                  } else  {
+                     output += dateStr[strPtr];
+                     yearDigits += 1;
+                     strPtr += 1;
                   } // endif
                } // endif 
    
