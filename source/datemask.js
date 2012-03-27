@@ -198,8 +198,8 @@ datemask = {
                      output += maskChr;
    
                   } else if (dayDigits == 1) {
-                     output += output.slice(0, -1) + ' ' + 
-                               output.slice(-1);
+                     output = output.slice(0, -1) + ' ' + 
+                              output.slice(-1);
                      dayDigits = 2;
                   } // endif
    
@@ -244,8 +244,8 @@ datemask = {
                      /* We don't have a valid 2nd digit for the day so
                         we're done with days. */
                      } else {
-                        output += output.slice(0, -1) + ' ' + 
-                                  output.slice(-1);
+                        output = output.slice(0, -1) + ' ' + 
+                                 output.slice(-1);
                         dayDigits = 2;
                      } // endif
 
@@ -269,8 +269,8 @@ datemask = {
                      output += maskChr;
                      
                   } else if (monthDigits == 1) {
-                     output += output.slice(0, -1) + ' ' + 
-                               output.slice(-1);
+                     output = output.slice(0, -1) + ' ' + 
+                              output.slice(-1);
                      monthDigits = 2;
                      
                   } // endif
@@ -316,8 +316,8 @@ datemask = {
                      /* We don't have a valid 2nd digit for the month so
                         we're done with months. */
                      } else {
-                        output += output.slice(0, -1) + ' ' + 
-                                  output.slice(-1);
+                        output = output.slice(0, -1) + ' ' + 
+                                 output.slice(-1);
                         monthDigits = 2;
                      } // endif
 
@@ -347,8 +347,8 @@ datemask = {
                   /* If we have at least one year digit, then pad with
                      spaces. */
                   } else if (yearDigits > 0) {
-                     output += output.slice(0, -1) + ' ' + 
-                               output.slice(-1);
+                     output = output.slice(0, -1) + ' ' + 
+                              output.slice(-1);
                      yearDigits += 1;
                   } // endif
    
@@ -360,24 +360,21 @@ datemask = {
                } else if (keylib.isDigit(dateStr[strPtr])) {
                   year += 10 * year + parseInt(dateStr[strPtr]);
 
-                  /* If we're entering the last digit then check to make
-                     sure we only enter a leap year if the month and
-                     day is Feb 29. */
-                  if (yearDigits != this.yearDigits(mask) || 
-                      (   yearDigits == this.yearDigits(mask)
-                       && month == 2 
-                       && day == 29 
-                       && this.leapYear(year, mask)) 
-                     ) {
+                  /* For the special case of entering a year when we
+                     already know that it MUST be a leap year, we 
+                     include the Y's in the year until we get 
+                     a good 2 or 4 digit year. */
+                  if (month == 2 && day == 29) {
+                     if (yearDigits < this.yearDigits(mask)) {
+                        output = 
+   
+                  /* Otherwise, we just keep on using the digits. */ 
+                  } else { 
                      output += dateStr[strPtr];
                      yearDigits += 1;
                      strPtr += 1;
-                  
-                  /* We got a bogus year for a year that has to be a 
-                     leap year so keep going until we hit a good digit. */
-                  } else {
-                     strPtr += 1;
                   } // endif
+
                } // endif 
    
             break; 
