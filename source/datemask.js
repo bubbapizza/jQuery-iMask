@@ -172,7 +172,8 @@ datemask = {
                      output += "dd"
    
                   } else if (dayDigits == 1) {
-                     output = ' ' + output;
+                     output += output.slice(0, -1) + ' ' + 
+                               output.slice(-1);
                      dayDigits = 2;
                   } // endif
    
@@ -207,7 +208,7 @@ datemask = {
                      day = day * 10 + parseInt(dateStr[strPtr]);
 
                      /* Check to make sure the 2nd digit produces a valid
-                        number of days.  If so, then use it for the 2nd 
+                        day number.  If so, then use it for the 2nd 
                         digit of the day slot. */
                      if (this.validDay(day, month, year)) {
                         output += dateStr[strPtr];
@@ -241,10 +242,12 @@ datemask = {
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
                   if (monthDigits == 0) {
-                     null;
+                     output += "mm"
                      
                   } else if (monthDigits == 1) {
-                     null;
+                     output += output.slice(0, -1) + ' ' + 
+                               output.slice(-1);
+                     monthDigits = 2;
                      
                   } // endif
    
@@ -253,15 +256,49 @@ datemask = {
                 *  fits in the minutes digit slots.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
-   
+
                   /** FIRST DIGIT **/
                   if (monthDigits == 0) {
-                     null;       
+                     month = parseInt(dateStr[strPtr]);
+
+                     /* If the first digit of the month > 1 then there's
+                        no way the next digit is a month digit. */
+                     if (month > 1) {
+                        output += ' ' + dateStr[strPtr];
+                        monthDigits == 2;
+                        strPtr += 1;
+
+                     /* We may or may not have a 2nd month digit coming so 
+                        keep on going. */
+                     } else {
+                        output += dateStr[strPtr];
+                        dayDigits = 1;
+                        strPtr += 1;
+                     } // endif
+                        
    
                   /** 2ND DIGIT **/
-                  } else if (monthDigits == 1) { 
-                     null;
+                  } else if (dayDigits == 1) { 
+                     month = month * 10 + parseInt(dateStr[strPtr]);
+
+                     /* Check to make sure the 2nd digit produces a valid
+                        month number.  If so, then use it for the 2nd 
+                        digit of the month slot. */
+                     if (month <= 12)) {
+                        output += dateStr[strPtr];
+                        monthDigits = 2;
+                        strPtr += 1;
+
+                     /* We don't have a valid 2nd digit for the month so
+                        we're done with months. */
+                     } else {
+                        output += output.slice(0, -1) + ' ' + 
+                                  output.slice(-1);
+                        monthDigits = 2;
+                     } // endif
+
                   } // endif
+   
                } // endif 
    
             break; 
