@@ -94,6 +94,35 @@ datemask = {
 
       
 
+   /******
+    *  Small function to determine if the day is valid, given also
+    *  the year and month.  This function assumes that the month
+    *  and year are either:
+    *
+    *     1) greater than 0 and valid or
+    *     2) equal to 0  
+    ******/
+   validDay : function(day, month, year) {
+
+      /* The day must be at least 1 or more. */
+      if (day <= 0) { 
+         return false;
+      } // endif 
+
+      /* If we don't know the month, then the day can be at most 31. */
+      if (month == 0) {
+         return (day <= 31);
+
+      /* We know the month, so just check the day against the number
+         of days in the month.  Note: even if we don't know the year
+         (i.e. the year == 0), we still get the right number of 
+         possible days for February because 0 is a leap year. */
+      } else {
+         return (day <= this.monthDays(month, year));
+
+   } // endfunction
+
+
 
    /******
     *  Apply a date mask to a string.  YearStart is an optional parameter
