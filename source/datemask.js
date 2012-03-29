@@ -166,6 +166,9 @@ datemask = {
       var day = 0;
       var month = 0;
       var year = null;
+      var oldDay;
+      var oldMonth;
+      var oldYear;
       var dayDigits = 0;
       var monthDigits = 0;
       var yearDigits = 0;
@@ -199,7 +202,8 @@ datemask = {
                 */
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
-                  if (dayDigits == 0) {
+                  if (   (dayDigits == 0)
+                      || (dayDigits == 1 && day == 0)) {
                      output += maskChr;
    
                   } else if (dayDigits == 1) {
@@ -228,7 +232,14 @@ datemask = {
                      /* We may or may not have a 2nd day digit coming so 
                         keep on going. */
                      } else {
-                        output += dateStr[strPtr];
+
+                        /* If we got a zero, blank out the first digit. */
+                        if (day == 0) {
+                           output += ' ';
+                        } else {
+                           output += dateStr[strPtr];
+                        } // endif
+
                         dayDigits = 1;
                         strPtr += 1;
                      } // endif
@@ -237,11 +248,13 @@ datemask = {
                   /** 2ND DIGIT **/
                   } else if (dayDigits == 1) { 
                      day = day * 10 + parseInt(dateStr[strPtr]);
+                     print ("day=", day, month, year);
 
                      /* Check to make sure the 2nd digit produces a valid
                         day number.  If so, then use it for the 2nd 
                         digit of the day slot. */
                      if (this.validDay(day, month, year, mask)) {
+                        print("ohi");
                         output += dateStr[strPtr];
                         dayDigits = 2;
                         strPtr += 1;
@@ -249,8 +262,16 @@ datemask = {
                      /* We don't have a valid 2nd digit for the day so
                         we're done with days. */
                      } else {
-                        output = output.slice(0, -1) + ' ' + 
-                                 output.slice(-1);
+                        
+                        /* If we got two zeros in a row, then just show
+                           a single mask character. */
+                        if (day == 0) {
+                           output += maskChr;
+                        } else {
+                           output = output.slice(0, -1) + ' ' + 
+                                    output.slice(-1);
+                        } // endif
+
                         dayDigits = 2;
                      } // endif
 
@@ -270,7 +291,8 @@ datemask = {
                 */
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
-                  if (monthDigits == 0) {
+                  if (   (monthDigits == 0)
+                      || (monthDigits == 1 && month == 0)) {
                      output += maskChr;
                      
                   } else if (monthDigits == 1) {
@@ -293,6 +315,11 @@ datemask = {
                      /* If the first digit of the month > 1 then there's
                         no way the next digit is a month digit. */
                      if (month > 1) {
+                        /*****  
+                          Check here for a valid month based on 
+                          current number of days.
+                         *****/
+                           
                         output += ' ' + dateStr[strPtr];
                         monthDigits = 2;
                         strPtr += 1;
@@ -300,7 +327,14 @@ datemask = {
                      /* We may or may not have a 2nd month digit coming so 
                         keep on going. */
                      } else {
-                        output += dateStr[strPtr];
+
+                        /* If we got a zero, blank out the first digit. */
+                        if (month == 0) {
+                           output += ' ';
+                        } else {
+                           output += dateStr[strPtr];
+                        } // endif
+
                         monthDigits = 1;
                         strPtr += 1;
                      } // endif
@@ -308,12 +342,13 @@ datemask = {
    
                   /** 2ND DIGIT **/
                   } else if (monthDigits == 1) { 
+                     oldMonth = month;
                      month = month * 10 + parseInt(dateStr[strPtr]);
 
                      /* Check to make sure the 2nd digit produces a valid
                         month number.  If so, then use it for the 2nd 
                         digit of the month slot. */
-                     if (month <= 12) {
+                     if (month > 1 && month <= 12) {
                         output += dateStr[strPtr];
                         monthDigits = 2;
                         strPtr += 1;
@@ -321,8 +356,17 @@ datemask = {
                      /* We don't have a valid 2nd digit for the month so
                         we're done with months. */
                      } else {
-                        output = output.slice(0, -1) + ' ' + 
-                                 output.slice(-1);
+                        month = oldMonth;
+
+                        /* If we got two zeros in a row, then just show
+                           a single mask character. */
+                        if (month == 0) {
+                           output += maskChr;
+                        } else {
+                           output = output.slice(0, -1) + ' ' + 
+                                    output.slice(-1);
+                        } // endif
+
                         monthDigits = 2;
                      } // endif
 
