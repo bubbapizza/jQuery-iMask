@@ -32,15 +32,12 @@ datemask = {
          /*** SLASH ***/
          } else if (str[i] == '/') {
 
-            /* If we have some digits entered, we may or may not
-               be able to use the '/' character. */
-            if (digits) {
-               if (slashCount < 2) {
-                  output += str[i]
-               } // endif
-   
-               slashCount += 1;
+            /* Only take the first two slashes. */
+            if (slashCount < 2) {
+               output += str[i]
             } // endif
+
+            slashCount += 1;
 
          } // endif
       } // endfor
@@ -60,7 +57,7 @@ datemask = {
       } else {
          return 4;
       } // endif
-   } // endfunction
+   }, // endfunction
    
 
 
@@ -70,6 +67,12 @@ datemask = {
    leapYear : function(year, mask) {
       var century;
       var cutOffYear;
+
+      /* If we don't know the year, assume it's a leap year. */
+      if (year == null) {
+         return true;
+      } // endif
+
 
       /* If the mask specifies a 2-digit year, then convert the year
          to a 4 digit number so the rest of our algorithm works
@@ -140,13 +143,12 @@ datemask = {
          return (day <= 31);
 
       /* We know the month, so just check the day against the number
-         of days in the month.  Note: even if we don't know the year
-         (i.e. the year == 0), we still get the right number of 
-         possible days for February because 0 is a leap year. */
+         of days in the month. */
       } else {
          return (day <= this.monthDays(month, year, mask));
+      } // endif
 
-   } // endfunction
+   }, // endfunction
 
 
 
@@ -163,10 +165,13 @@ datemask = {
       var maskPtr;
       var day = 0;
       var month = 0;
-      var year = 0;
+      var year = null;
       var dayDigits = 0;
       var monthDigits = 0;
       var yearDigits = 0;
+      var maxYearDigits = this.yearDigits(mask);
+      var output = '';
+      var feb29 = false;
    
       /* If centuryStart was specified override CENTURY_START. */
       if (centuryStart) {
@@ -217,7 +222,7 @@ datemask = {
                         no way the next digit is a day digit. */
                      if (day > 3) {
                         output += ' ' + dateStr[strPtr];
-                        dayDigits == 2;
+                        dayDigits = 2;
                         strPtr += 1;
 
                      /* We may or may not have a 2nd day digit coming so 
@@ -289,26 +294,26 @@ datemask = {
                         no way the next digit is a month digit. */
                      if (month > 1) {
                         output += ' ' + dateStr[strPtr];
-                        monthDigits == 2;
+                        monthDigits = 2;
                         strPtr += 1;
 
                      /* We may or may not have a 2nd month digit coming so 
                         keep on going. */
                      } else {
                         output += dateStr[strPtr];
-                        dayDigits = 1;
+                        monthDigits = 1;
                         strPtr += 1;
                      } // endif
                         
    
                   /** 2ND DIGIT **/
-                  } else if (dayDigits == 1) { 
+                  } else if (monthDigits == 1) { 
                      month = month * 10 + parseInt(dateStr[strPtr]);
 
                      /* Check to make sure the 2nd digit produces a valid
                         month number.  If so, then use it for the 2nd 
                         digit of the month slot. */
-                     if (month <= 12)) {
+                     if (month <= 12) {
                         output += dateStr[strPtr];
                         monthDigits = 2;
                         strPtr += 1;
@@ -331,7 +336,7 @@ datemask = {
             /*** YEARS ***/
             case 'y':
             case 'Y':
-                    
+
                /*
                 *  If we ran out of dateStr characters, or we hit the
                 *  '/' character, then we're done entering years.
@@ -339,42 +344,44 @@ datemask = {
                if (   dateStr[strPtr] == undefined
                    || dateStr[strPtr] == '/') {
 
-                  /* If no year digits have been entered, fill the
-                     field wit mask characters. */
-                  if (yearDigits == 0) {
-                     output += maskChr;
-                     
-                  /* If we have at least one year digit, then pad with
-                     spaces. */
-                  } else if (yearDigits > 0) {
-                     output = output.slice(0, -1) + ' ' + 
-                              output.slice(-1);
-                     yearDigits += 1;
-                  } // endif
-   
+                  output += maskChr;
+                  yearDigits += 1;
+
                /*
                 *  Otherwise, if we have a digit then check to make sure
                 *  the user only enters a leap year if the month/day is
                 *  Feb 29.
                 */
                } else if (keylib.isDigit(dateStr[strPtr])) {
-                  year += 10 * year + parseInt(dateStr[strPtr]);
+                  year = 10 * year + parseInt(dateStr[strPtr]);
+                  feb29 = (month == 2 && day == 29);
 
-                  /* For the special case of entering a year when we
-                     already know that it MUST be a leap year, we 
-                     include the Y's in the year until we get 
-                     a good 2 or 4 digit year. */
-                  if (month == 2 && day == 29) {
-                     if (yearDigits < this.yearDigits(mask)) {
-                        output = 
-   
-                  /* Otherwise, we just keep on using the digits. */ 
-                  } else { 
+
+                  /* FIRST DIGITS */
+                  if (yearDigits < (maxYearDigits - 1)) { 
                      output += dateStr[strPtr];
-                     yearDigits += 1;
                      strPtr += 1;
+
+                  /* LAST DIGIT */
+                  } else if (yearDigits == (maxYearDigits - 1)) {
+
+                     /* If it's not Feb 29 OR it is Feb 29 but the year
+                        entered is a leap year, then we're ok. */
+                     if (!feb29 || (feb29 && this.leapYear(year, mask))) {
+
+                        output += dateStr[strPtr];
+                        strPtr += 1;
+
+                     /* We did not get a leap year when we needed one
+                        so we're done. */
+                     } else {
+                        output += maskChr;
+                     } // endif
+                        
                   } // endif
 
+
+                  yearDigits += 1;
                } // endif 
    
             break; 
