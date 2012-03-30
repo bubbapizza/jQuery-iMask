@@ -158,6 +158,10 @@ datemask = {
       if (month <= 0 || month > 12) { 
          return false;
 
+      /* If we don't know the day then who cares which month it is. */
+      } else if (day == 0) {
+         return true;
+
       /* We know the day so make sure it's less than the number of 
          days in the month. */
       } else {
@@ -368,7 +372,7 @@ datemask = {
                      /* Check to make sure the 2nd digit produces a valid
                         month number.  If so, then use it for the 2nd 
                         digit of the month slot. */
-                     if (month > 1 && month <= 12) {
+                     if (month >= 1 && month <= 12) {
 
                         /* Check to make sure month is valid given the
                            the number of days & year entered so far. */
