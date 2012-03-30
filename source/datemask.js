@@ -125,11 +125,7 @@ datemask = {
 
    /******
     *  Small function to determine if the day is valid, given also
-    *  the year and month.  This function assumes that the month
-    *  and year are either:
-    *
-    *     1) greater than 0 and valid or
-    *     2) equal to 0  
+    *  the year and month.
     ******/
    validDay : function(day, month, year, mask) {
 
@@ -144,6 +140,26 @@ datemask = {
 
       /* We know the month, so just check the day against the number
          of days in the month. */
+      } else {
+         return (day <= this.monthDays(month, year, mask));
+      } // endif
+
+   }, // endfunction
+
+
+
+   /******
+    *  Small function to determine if the month is valid given 
+    *  the number of days. 
+    ******/
+   validMonth : function(day, month, year, mask) {
+
+      /* Obviously, the month has to be between 1 & 12. */
+      if (month <= 0 || month > 12) { 
+         return false;
+
+      /* We know the day so make sure it's less than the number of 
+         days in the month. */
       } else {
          return (day <= this.monthDays(month, year, mask));
       } // endif
@@ -248,13 +264,11 @@ datemask = {
                   /** 2ND DIGIT **/
                   } else if (dayDigits == 1) { 
                      day = day * 10 + parseInt(dateStr[strPtr]);
-                     print ("day=", day, month, year);
 
                      /* Check to make sure the 2nd digit produces a valid
                         day number.  If so, then use it for the 2nd 
                         digit of the day slot. */
                      if (this.validDay(day, month, year, mask)) {
-                        print("ohi");
                         output += dateStr[strPtr];
                         dayDigits = 2;
                         strPtr += 1;
@@ -315,14 +329,20 @@ datemask = {
                      /* If the first digit of the month > 1 then there's
                         no way the next digit is a month digit. */
                      if (month > 1) {
-                        /*****  
-                          Check here for a valid month based on 
-                          current number of days.
-                         *****/
-                           
-                        output += ' ' + dateStr[strPtr];
-                        monthDigits = 2;
-                        strPtr += 1;
+
+                        /* Check to make sure the first digit is a 
+                           valid month, given the number of days
+                           & year entered so far. */
+                        if (this.validMonth(day, month, year, mask)) {
+                           output += ' ' + dateStr[strPtr];
+                           monthDigits = 2;
+                           strPtr += 1;
+
+                        /* We got a bad digit for months.  Fill in the
+                           month slot with a mask characters. */
+                        } else {
+                           output += maskChr;
+                        } // endif
 
                      /* We may or may not have a 2nd month digit coming so 
                         keep on going. */
@@ -349,9 +369,40 @@ datemask = {
                         month number.  If so, then use it for the 2nd 
                         digit of the month slot. */
                      if (month > 1 && month <= 12) {
-                        output += dateStr[strPtr];
+
+                        /* Check to make sure month is valid given the
+                           the number of days & year entered so far. */
+                        if (this.validMonth(day, month, year, mask)) {
+                           output += dateStr[strPtr];
+                           strPtr += 1;
+
+                        /* 
+                         *  We got a bad 2nd digit for the month based on 
+                         *  the current number of days we already have.
+                         *  At this point, the first digit MUST be a
+                         *  0 or a 1.  
+                         *
+                         *  If the first digit was a zero, we skip the 
+                         *  months and just show the mask character.
+                         *
+                         *  If the first digit was one, then we set the
+                         *  month to January which is fine since it has
+                         *  31 days and the day will never be more than 
+                         *  that.
+                         */
+                        } else {
+                           month = oldMonth;
+
+                           if (month == 0) {
+                              output += maskChr;
+                           } else {
+                              output = output.slice(0, -1) + ' ' + 
+                                       output.slice(-1);
+                           } // endif
+                  
+                        } // endif
+
                         monthDigits = 2;
-                        strPtr += 1;
 
                      /* We don't have a valid 2nd digit for the month so
                         we're done with months. */
