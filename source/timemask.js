@@ -387,7 +387,7 @@ timemask = {
    /******
     *  To determine the next cursor position, we need the following
     *  parameters:
-    *     pos  -> the current cursor position
+    *     lastPos  -> the current cursor position
     *     chr  -> the event (a.k.a. what key was pressed)
     *     timeStr  -> the current time in the input field
     *     mask -> the time mask
