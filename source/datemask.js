@@ -267,6 +267,7 @@ datemask = {
    
                   /** 2ND DIGIT **/
                   } else if (dayDigits == 1) { 
+                     oldDay = day;
                      day = day * 10 + parseInt(dateStr[strPtr]);
 
                      /* Check to make sure the 2nd digit produces a valid
@@ -288,6 +289,7 @@ datemask = {
                         } else {
                            output = output.slice(0, -1) + ' ' + 
                                     output.slice(-1);
+                           day = oldDay;
                         } // endif
 
                         dayDigits = 2;
